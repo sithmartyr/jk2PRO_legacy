@@ -28,4 +28,4 @@ Use the batch files (cgame.bat, game.bat, etc.) in each module's proper director
 
 Daggo & ouned for a few bugs that I ran into.  Thanks go to Boothand for helping me fix the client 0 bugs.  
 
-Kairos, Source, Leviticus, Daggo, miso, visitor & eternal for testing thus far.
+Kairos, Source, Leviticus, Daggo, miso, visitor, Acrobat, Smoo & eternal for testing thus far.
