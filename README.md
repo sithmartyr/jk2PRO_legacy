@@ -26,4 +26,6 @@ Use the batch files (cgame.bat, game.bat, etc.) in each module's proper director
 ### Credits
 **videoP**, the original author of jaPRO.  This mod is derived from jaPRO, and he really deserves all the credit for this mod's existence.  He has been a huge help with development, and that's an understatement. 
 
-Kairos, Source, Leviticus, Daggo, visitor & eternal for testing thus far.
+Daggo & ouned for a few bugs that I ran into.  Thanks go to Boothand for helping me fix the client 0 bugs.  
+
+Kairos, Source, Leviticus, Daggo, miso, visitor & eternal for testing thus far.
