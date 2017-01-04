@@ -1,0 +1,562 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug JK2|Win32">
+      <Configuration>Debug JK2</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Final JK2|Win32">
+      <Configuration>Final JK2</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release JK2|Win32">
+      <Configuration>Release JK2</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Template|Win32">
+      <Configuration>Template</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <SccProjectName>
+    </SccProjectName>
+    <SccLocalPath>
+    </SccLocalPath>
+    <ProjectGuid>{7CDEE802-5203-47A2-B6FC-21D8F180A081}</ProjectGuid>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Template|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v120</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release JK2|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v120</PlatformToolset>
+    <UseOfMfc>false</UseOfMfc>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Final JK2|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v120</PlatformToolset>
+    <UseOfMfc>false</UseOfMfc>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug JK2|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v120</PlatformToolset>
+    <UseOfMfc>false</UseOfMfc>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Template|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release JK2|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.Cpp.UpgradeFromVC60.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Final JK2|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.Cpp.UpgradeFromVC60.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug JK2|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.Cpp.UpgradeFromVC60.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug JK2|Win32'">
+    <OutDir>.\Debug\</OutDir>
+    <IntDir>.\Debug\jk2\</IntDir>
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Final JK2|Win32'">
+    <OutDir>.\Final\</OutDir>
+    <IntDir>.\Final\jk2\</IntDir>
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release JK2|Win32'">
+    <OutDir>.\Release\</OutDir>
+    <IntDir>.\Release\jk2\</IntDir>
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug JK2|Win32'">
+    <ClCompile>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <InlineFunctionExpansion>Default</InlineFunctionExpansion>
+      <FunctionLevelLinking>false</FunctionLevelLinking>
+      <Optimization>Disabled</Optimization>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <PreprocessorDefinitions>_DEBUG;WIN32;_WINDOWS;_JK2;MEM_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AssemblerListingLocation>.\Debug\jk2\</AssemblerListingLocation>
+      <BrowseInformation>true</BrowseInformation>
+      <PrecompiledHeaderOutputFile>.\Debug\jk2\jk2mp.pch</PrecompiledHeaderOutputFile>
+      <ObjectFileName>.\Debug\jk2\</ObjectFileName>
+      <ProgramDataBaseFileName>.\Debug\jk2\</ProgramDataBaseFileName>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+    </ClCompile>
+    <Midl>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <PreprocessorDefinitions>_Debug;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <TypeLibraryName>.\Debug\jk2mp.tlb</TypeLibraryName>
+      <MkTypLibCompatible>true</MkTypLibCompatible>
+      <TargetEnvironment>Win32</TargetEnvironment>
+    </Midl>
+    <ResourceCompile>
+      <Culture>0x0409</Culture>
+      <ResourceOutputFileName>win32\winquake.res</ResourceOutputFileName>
+      <PreprocessorDefinitions>_Debug;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
+    <Bscmake>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <OutputFile>.\Debug\jk2mp.bsc</OutputFile>
+    </Bscmake>
+    <Link>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Windows</SubSystem>
+      <OutputFile>.\Debug\jk2mp.exe</OutputFile>
+      <AdditionalDependencies>./debug/jk2/smrtheap.obj;winmm.lib;wsock32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <StackReserveSize>8388608</StackReserveSize>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Final JK2|Win32'">
+    <ClCompile>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <InlineFunctionExpansion>Default</InlineFunctionExpansion>
+      <StringPooling>true</StringPooling>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <Optimization>MaxSpeed</Optimization>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <WarningLevel>Level4</WarningLevel>
+      <PreprocessorDefinitions>_WIN32;NDEBUG;_WINDOWS;WIN32;_JK2;FINAL_BUILD;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AssemblerListingLocation>.\Final\jk2\</AssemblerListingLocation>
+      <PrecompiledHeaderOutputFile>.\Final\jk2\jk2mp.pch</PrecompiledHeaderOutputFile>
+      <ObjectFileName>.\Final\jk2\</ObjectFileName>
+      <ProgramDataBaseFileName>.\Final\jk2\</ProgramDataBaseFileName>
+    </ClCompile>
+    <Midl>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <PreprocessorDefinitions>NDebug;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <TypeLibraryName>.\Final\jk2mp.tlb</TypeLibraryName>
+      <MkTypLibCompatible>true</MkTypLibCompatible>
+      <TargetEnvironment>Win32</TargetEnvironment>
+    </Midl>
+    <ResourceCompile>
+      <Culture>0x0409</Culture>
+      <PreprocessorDefinitions>NDebug;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
+    <Bscmake>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <OutputFile>.\Final\jk2mp.bsc</OutputFile>
+    </Bscmake>
+    <Link>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
+      <SubSystem>Windows</SubSystem>
+      <OutputFile>.\Final\jk2mp.exe</OutputFile>
+      <AdditionalDependencies>winmm.lib;wsock32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <StackReserveSize>8388608</StackReserveSize>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release JK2|Win32'">
+    <ClCompile>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <InlineFunctionExpansion>Default</InlineFunctionExpansion>
+      <StringPooling>true</StringPooling>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <Optimization>MaxSpeed</Optimization>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <WarningLevel>Level4</WarningLevel>
+      <PreprocessorDefinitions>_WIN32;NDEBUG;WIN32;_WINDOWS;_JK2;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AssemblerListingLocation>.\Release\jk2\</AssemblerListingLocation>
+      <PrecompiledHeaderOutputFile>.\Release\jk2\jk2mp.pch</PrecompiledHeaderOutputFile>
+      <ObjectFileName>.\Release\jk2\</ObjectFileName>
+      <ProgramDataBaseFileName>.\Release\jk2\</ProgramDataBaseFileName>
+    </ClCompile>
+    <Midl>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <PreprocessorDefinitions>NDebug;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <TypeLibraryName>.\Release\jk2mp.tlb</TypeLibraryName>
+      <MkTypLibCompatible>true</MkTypLibCompatible>
+      <TargetEnvironment>Win32</TargetEnvironment>
+    </Midl>
+    <ResourceCompile>
+      <Culture>0x0409</Culture>
+      <PreprocessorDefinitions>NDebug;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
+    <Bscmake>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <OutputFile>.\Release\jk2mp.bsc</OutputFile>
+    </Bscmake>
+    <Link>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Windows</SubSystem>
+      <OutputFile>.\Release\jk2mp.exe</OutputFile>
+      <AdditionalDependencies>winmm.lib;wsock32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <StackReserveSize>8388608</StackReserveSize>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="game\anims.h" />
+    <ClInclude Include="game\bg_weapons.h" />
+    <ClInclude Include="game\botlib.h" />
+    <ClInclude Include="qcommon\disablewarnings.h" />
+    <ClInclude Include="win32\resource.h" />
+    <ClInclude Include="ui\ui_public.h" />
+    <ClInclude Include="client\client.h" />
+    <ClInclude Include="client\FXExport.h" />
+    <ClInclude Include="client\FxPrimitives.h" />
+    <ClInclude Include="client\FxScheduler.h" />
+    <ClInclude Include="client\FxSystem.h" />
+    <ClInclude Include="client\FxUtil.h" />
+    <ClInclude Include="game\bg_public.h" />
+    <ClInclude Include="cgame\cg_public.h" />
+    <ClInclude Include="qcommon\chash.h" />
+    <ClInclude Include="qcommon\cm_local.h" />
+    <ClInclude Include="qcommon\cm_patch.h" />
+    <ClInclude Include="qcommon\cm_polylib.h" />
+    <ClInclude Include="qcommon\cm_public.h" />
+    <ClInclude Include="game\g_public.h" />
+    <ClInclude Include="qcommon\game_version.h" />
+    <ClInclude Include="qcommon\GenericParser2.h" />
+    <ClInclude Include="qcommon\hstring.h" />
+    <ClInclude Include="qcommon\INetProfile.h" />
+    <ClInclude Include="ui\keycodes.h" />
+    <ClInclude Include="client\keys.h" />
+    <ClInclude Include="qcommon\MiniHeap.h" />
+    <ClInclude Include="game\q_shared.h" />
+    <ClInclude Include="qcommon\qcommon.h" />
+    <ClInclude Include="qcommon\qfiles.h" />
+    <ClInclude Include="renderer\qgl.h" />
+    <ClInclude Include="qcommon\RoffSystem.h" />
+    <ClInclude Include="qcommon\sstring.h" />
+    <ClInclude Include="qcommon\strip.h" />
+    <ClInclude Include="game\surfaceflags.h" />
+    <ClInclude Include="qcommon\tags.h" />
+    <ClInclude Include="qcommon\unzip.h" />
+    <ClInclude Include="qcommon\vm_local.h" />
+    <ClInclude Include="win32\win_local.h" />
+    <ClInclude Include="server\server.h" />
+    <ClInclude Include="mp3code\config.h" />
+    <ClInclude Include="mp3code\copyright.h" />
+    <ClInclude Include="mp3code\htable.h" />
+    <ClInclude Include="mp3code\jdw.h" />
+    <ClInclude Include="mp3code\l3.h" />
+    <ClInclude Include="mp3code\mhead.h" />
+    <ClInclude Include="mp3code\mp3struct.h" />
+    <ClInclude Include="mp3code\port.h" />
+    <ClInclude Include="mp3code\small_header.h" />
+    <ClInclude Include="mp3code\tableawd.h" />
+    <ClInclude Include="client\snd_local.h" />
+    <ClInclude Include="client\snd_mp3.h" />
+    <ClInclude Include="client\snd_public.h" />
+    <ClInclude Include="jpeg-6\jchuff.h" />
+    <ClInclude Include="jpeg-6\jconfig.h" />
+    <ClInclude Include="jpeg-6\jdct.h" />
+    <ClInclude Include="jpeg-6\jdhuff.h" />
+    <ClInclude Include="jpeg-6\jerror.h" />
+    <ClInclude Include="jpeg-6\jinclude.h" />
+    <ClInclude Include="jpeg-6\jmemsys.h" />
+    <ClInclude Include="jpeg-6\jmorecfg.h" />
+    <ClInclude Include="jpeg-6\jpegint.h" />
+    <ClInclude Include="jpeg-6\jpeglib.h" />
+    <ClInclude Include="jpeg-6\jversion.h" />
+    <ClInclude Include="ft2\sfdriver.h" />
+    <ClInclude Include="ft2\sfobjs.h" />
+    <ClInclude Include="ft2\ttcmap.h" />
+    <ClInclude Include="ft2\ttload.h" />
+    <ClInclude Include="ft2\ttpost.h" />
+    <ClInclude Include="ft2\ttsbit.h" />
+    <ClInclude Include="png\png.h" />
+    <ClInclude Include="renderer\glext.h" />
+    <ClInclude Include="win32\glw_win.h" />
+    <ClInclude Include="renderer\matcomp.h" />
+    <ClInclude Include="renderer\tr_font.h" />
+    <ClInclude Include="renderer\tr_local.h" />
+    <ClInclude Include="renderer\tr_public.h" />
+    <ClInclude Include="renderer\tr_quicksprite.h" />
+    <ClInclude Include="cgame\tr_types.h" />
+    <ClInclude Include="renderer\tr_WorldEffects.h" />
+    <ClInclude Include="ghoul2\G2.h" />
+    <ClInclude Include="ghoul2\G2_gore.h" />
+    <ClInclude Include="ghoul2\G2_local.h" />
+    <ClInclude Include="ghoul2\ghoul2_shared.h" />
+    <ClInclude Include="renderer\mdx_format.h" />
+    <ClInclude Include="zlib\deflate.h" />
+    <ClInclude Include="zlib\infblock.h" />
+    <ClInclude Include="zlib\infcodes.h" />
+    <ClInclude Include="zlib\inffast.h" />
+    <ClInclude Include="zlib\inffixed.h" />
+    <ClInclude Include="zlib\inftrees.h" />
+    <ClInclude Include="zlib\infutil.h" />
+    <ClInclude Include="zlib\trees.h" />
+    <ClInclude Include="zlib\zconf.h" />
+    <ClInclude Include="zlib\zlib.h" />
+    <ClInclude Include="zlib\zutil.h" />
+    <ClInclude Include="strings\con_text.h" />
+    <ClInclude Include="strings\str_server.h" />
+    <ClInclude Include="encryption\buffer.h" />
+    <ClInclude Include="encryption\cpp_interface.h" />
+    <ClInclude Include="encryption\encryption.h" />
+    <ClInclude Include="encryption\sockets.h" />
+    <ClInclude Include="smartheap\HEAPAGNT.H">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Final JK2|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release JK2|Win32'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="smartheap\SMRTHEAP.H">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Final JK2|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release JK2|Win32'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="smartheap\smrtheap.hpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Final JK2|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release JK2|Win32'">true</ExcludedFromBuild>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="win32\qe3.ico" />
+    <CustomBuild Include="smartheap\HA312W32.DLL">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Final JK2|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release JK2|Win32'">true</ExcludedFromBuild>
+    </CustomBuild>
+    <CustomBuild Include="smartheap\SHW32.DLL">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Final JK2|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release JK2|Win32'">true</ExcludedFromBuild>
+    </CustomBuild>
+    <CustomBuild Include="Debug\HA312W32.DLL">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release JK2|Win32'">true</ExcludedFromBuild>
+    </CustomBuild>
+    <CustomBuild Include="Debug\SHW32.DLL">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release JK2|Win32'">true</ExcludedFromBuild>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="win32\winquake.rc">
+      <Culture Condition="'$(Configuration)|$(Platform)'=='Debug JK2|Win32'">0x0409</Culture>
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug JK2|Win32'">win32;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Final JK2|Win32'">win32;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release JK2|Win32'">win32;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="client\0_SH_Leak.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Final JK2|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release JK2|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="client\cl_cgame.cpp">
+      <InlineFunctionExpansion Condition="'$(Configuration)|$(Platform)'=='Final JK2|Win32'">Default</InlineFunctionExpansion>
+      <InlineFunctionExpansion Condition="'$(Configuration)|$(Platform)'=='Release JK2|Win32'">Default</InlineFunctionExpansion>
+    </ClCompile>
+    <ClCompile Include="client\cl_cin.cpp" />
+    <ClCompile Include="client\cl_console.cpp" />
+    <ClCompile Include="client\cl_input.cpp" />
+    <ClCompile Include="client\cl_keys.cpp" />
+    <ClCompile Include="client\cl_main.cpp" />
+    <ClCompile Include="client\cl_net_chan.cpp" />
+    <ClCompile Include="client\cl_parse.cpp" />
+    <ClCompile Include="client\cl_scrn.cpp" />
+    <ClCompile Include="client\cl_ui.cpp" />
+    <ClCompile Include="client\FXExport.cpp" />
+    <ClCompile Include="client\FxPrimitives.cpp" />
+    <ClCompile Include="client\FxScheduler.cpp" />
+    <ClCompile Include="client\FxSystem.cpp" />
+    <ClCompile Include="client\FxTemplate.cpp" />
+    <ClCompile Include="client\FxUtil.cpp" />
+    <ClCompile Include="qcommon\cm_load.cpp" />
+    <ClCompile Include="qcommon\cm_patch.cpp" />
+    <ClCompile Include="qcommon\cm_polylib.cpp" />
+    <ClCompile Include="qcommon\cm_shader.cpp" />
+    <ClCompile Include="qcommon\cm_test.cpp" />
+    <ClCompile Include="qcommon\cm_trace.cpp" />
+    <ClCompile Include="qcommon\cmd.cpp" />
+    <ClCompile Include="qcommon\CNetProfile.cpp" />
+    <ClCompile Include="qcommon\common.cpp" />
+    <ClCompile Include="qcommon\cvar.cpp" />
+    <ClCompile Include="qcommon\files.cpp" />
+    <ClCompile Include="qcommon\GenericParser2.cpp" />
+    <ClCompile Include="qcommon\hstring.cpp" />
+    <ClCompile Include="qcommon\huffman.cpp" />
+    <ClCompile Include="qcommon\md4.cpp" />
+    <ClCompile Include="qcommon\msg.cpp" />
+    <ClCompile Include="qcommon\net_chan.cpp" />
+    <ClCompile Include="game\q_math.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug JK2|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Final JK2|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release JK2|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="qcommon\q_math.cpp" />
+    <ClCompile Include="game\q_shared.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug JK2|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Final JK2|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release JK2|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="qcommon\q_shared.cpp" />
+    <ClCompile Include="qcommon\RoffSystem.cpp" />
+    <ClCompile Include="qcommon\strip.cpp" />
+    <ClCompile Include="qcommon\unzip.cpp" />
+    <ClCompile Include="qcommon\vm.cpp" />
+    <ClCompile Include="qcommon\vm_interpreted.cpp" />
+    <ClCompile Include="qcommon\vm_x86.cpp" />
+    <ClCompile Include="win32\win_input.cpp" />
+    <ClCompile Include="win32\win_main.cpp" />
+    <ClCompile Include="win32\win_net.cpp" />
+    <ClCompile Include="win32\win_shared.cpp" />
+    <ClCompile Include="win32\win_snd.cpp" />
+    <ClCompile Include="win32\win_syscon.cpp" />
+    <ClCompile Include="win32\win_wndproc.cpp" />
+    <ClCompile Include="server\sv_bot.cpp" />
+    <ClCompile Include="server\sv_ccmds.cpp" />
+    <ClCompile Include="server\sv_client.cpp" />
+    <ClCompile Include="server\sv_game.cpp" />
+    <ClCompile Include="server\sv_init.cpp" />
+    <ClCompile Include="server\sv_main.cpp" />
+    <ClCompile Include="server\sv_net_chan.cpp" />
+    <ClCompile Include="server\sv_snapshot.cpp" />
+    <ClCompile Include="server\sv_world.cpp" />
+    <ClCompile Include="mp3code\cdct.c" />
+    <ClCompile Include="mp3code\csbt.c" />
+    <ClCompile Include="mp3code\csbtb.c" />
+    <ClCompile Include="mp3code\csbtl3.c" />
+    <ClCompile Include="mp3code\cup.c" />
+    <ClCompile Include="mp3code\cupini.c" />
+    <ClCompile Include="mp3code\cupl1.c" />
+    <ClCompile Include="mp3code\cupl3.c" />
+    <ClCompile Include="mp3code\cwin.c" />
+    <ClCompile Include="mp3code\cwinb.c" />
+    <ClCompile Include="mp3code\cwinm.c" />
+    <ClCompile Include="mp3code\hwin.c" />
+    <ClCompile Include="mp3code\l3dq.c" />
+    <ClCompile Include="mp3code\l3init.c" />
+    <ClCompile Include="mp3code\mdct.c" />
+    <ClCompile Include="mp3code\mhead.c" />
+    <ClCompile Include="mp3code\msis.c" />
+    <ClCompile Include="mp3code\towave.c" />
+    <ClCompile Include="mp3code\uph.c" />
+    <ClCompile Include="mp3code\upsf.c" />
+    <ClCompile Include="mp3code\wavep.c" />
+    <ClCompile Include="client\snd_dma.cpp" />
+    <ClCompile Include="client\snd_mem.cpp" />
+    <ClCompile Include="client\snd_mix.cpp" />
+    <ClCompile Include="client\snd_mp3.cpp" />
+    <ClCompile Include="jpeg-6\jcapimin.cpp" />
+    <ClCompile Include="jpeg-6\jccoefct.cpp" />
+    <ClCompile Include="jpeg-6\jccolor.cpp" />
+    <ClCompile Include="jpeg-6\jcdctmgr.cpp" />
+    <ClCompile Include="jpeg-6\jchuff.cpp" />
+    <ClCompile Include="jpeg-6\jcinit.cpp" />
+    <ClCompile Include="jpeg-6\jcmainct.cpp" />
+    <ClCompile Include="jpeg-6\jcmarker.cpp" />
+    <ClCompile Include="jpeg-6\jcmaster.cpp" />
+    <ClCompile Include="jpeg-6\jcomapi.cpp" />
+    <ClCompile Include="jpeg-6\jcparam.cpp" />
+    <ClCompile Include="jpeg-6\jcphuff.cpp" />
+    <ClCompile Include="jpeg-6\jcprepct.cpp" />
+    <ClCompile Include="jpeg-6\jcsample.cpp" />
+    <ClCompile Include="jpeg-6\jctrans.cpp" />
+    <ClCompile Include="jpeg-6\jdapimin.cpp" />
+    <ClCompile Include="jpeg-6\jdapistd.cpp" />
+    <ClCompile Include="jpeg-6\jdatadst.cpp" />
+    <ClCompile Include="jpeg-6\jdatasrc.cpp" />
+    <ClCompile Include="jpeg-6\jdcoefct.cpp" />
+    <ClCompile Include="jpeg-6\jdcolor.cpp" />
+    <ClCompile Include="jpeg-6\jddctmgr.cpp" />
+    <ClCompile Include="jpeg-6\jdhuff.cpp" />
+    <ClCompile Include="jpeg-6\jdinput.cpp" />
+    <ClCompile Include="jpeg-6\jdmainct.cpp" />
+    <ClCompile Include="jpeg-6\jdmarker.cpp" />
+    <ClCompile Include="jpeg-6\jdmaster.cpp" />
+    <ClCompile Include="jpeg-6\jdpostct.cpp" />
+    <ClCompile Include="jpeg-6\jdsample.cpp" />
+    <ClCompile Include="jpeg-6\jdtrans.cpp" />
+    <ClCompile Include="jpeg-6\jerror.cpp" />
+    <ClCompile Include="jpeg-6\jfdctflt.cpp" />
+    <ClCompile Include="jpeg-6\jidctflt.cpp" />
+    <ClCompile Include="jpeg-6\jmemmgr.cpp" />
+    <ClCompile Include="jpeg-6\jmemnobs.cpp" />
+    <ClCompile Include="jpeg-6\jutils.cpp" />
+    <ClCompile Include="png\png.cpp" />
+    <ClCompile Include="renderer\matcomp.c" />
+    <ClCompile Include="renderer\tr_animation.cpp" />
+    <ClCompile Include="renderer\tr_backend.cpp" />
+    <ClCompile Include="renderer\tr_bsp.cpp" />
+    <ClCompile Include="renderer\tr_cmds.cpp" />
+    <ClCompile Include="renderer\tr_curve.cpp" />
+    <ClCompile Include="renderer\tr_flares.cpp" />
+    <ClCompile Include="renderer\tr_font.cpp" />
+    <ClCompile Include="renderer\tr_ghoul2.cpp" />
+    <ClCompile Include="renderer\tr_image.cpp" />
+    <ClCompile Include="renderer\tr_init.cpp" />
+    <ClCompile Include="renderer\tr_light.cpp" />
+    <ClCompile Include="renderer\tr_main.cpp" />
+    <ClCompile Include="renderer\tr_marks.cpp" />
+    <ClCompile Include="renderer\tr_mesh.cpp" />
+    <ClCompile Include="renderer\tr_model.cpp" />
+    <ClCompile Include="renderer\tr_noise.cpp" />
+    <ClCompile Include="renderer\tr_quicksprite.cpp" />
+    <ClCompile Include="renderer\tr_scene.cpp" />
+    <ClCompile Include="renderer\tr_shade.cpp" />
+    <ClCompile Include="renderer\tr_shade_calc.cpp" />
+    <ClCompile Include="renderer\tr_shader.cpp" />
+    <ClCompile Include="renderer\tr_shadows.cpp" />
+    <ClCompile Include="renderer\tr_sky.cpp" />
+    <ClCompile Include="renderer\tr_surface.cpp" />
+    <ClCompile Include="renderer\tr_surfacesprites.cpp" />
+    <ClCompile Include="renderer\tr_world.cpp" />
+    <ClCompile Include="renderer\tr_WorldEffects.cpp" />
+    <ClCompile Include="win32\win_gamma.cpp" />
+    <ClCompile Include="win32\win_glimp.cpp" />
+    <ClCompile Include="win32\win_qgl.cpp" />
+    <ClCompile Include="ghoul2\G2_API.cpp" />
+    <ClCompile Include="ghoul2\G2_bolts.cpp" />
+    <ClCompile Include="ghoul2\G2_bones.cpp" />
+    <ClCompile Include="ghoul2\G2_misc.cpp" />
+    <ClCompile Include="ghoul2\G2_surfaces.cpp" />
+    <ClCompile Include="zlib\adler32.c" />
+    <ClCompile Include="zlib\crc32.cpp" />
+    <ClCompile Include="zlib\deflate.c" />
+    <ClCompile Include="zlib\infblock.c" />
+    <ClCompile Include="zlib\infcodes.c" />
+    <ClCompile Include="zlib\inffast.c" />
+    <ClCompile Include="zlib\inflate.c" />
+    <ClCompile Include="zlib\inftrees.c" />
+    <ClCompile Include="zlib\infutil.c" />
+    <ClCompile Include="zlib\trees.c" />
+    <ClCompile Include="zlib\zutil.c" />
+    <ClCompile Include="encryption\buffer.cpp" />
+    <ClCompile Include="encryption\cpp_interface.cpp" />
+    <ClCompile Include="encryption\sockets.cpp" />
+    <ClCompile Include="smartheap\SMRTHEAP.C">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Final JK2|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release JK2|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="smartheap\HAW32M.LIB">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Final JK2|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release JK2|Win32'">true</ExcludedFromBuild>
+    </Library>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="botlib\botlib.vcxproj">
+      <Project>{868577db-b985-4bb0-bd5b-bf01113c111d}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="cgame\JK2_cgame.vcxproj">
+      <Project>{86d98303-f9fc-4a06-aeda-a5058527bfd3}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="game\JK2_game.vcxproj">
+      <Project>{fb8e215f-53ea-4193-8fbb-d2db87be5ed7}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="ui\ui.vcxproj">
+      <Project>{a98d72f2-7088-4a13-8f39-dd30590f0d55}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

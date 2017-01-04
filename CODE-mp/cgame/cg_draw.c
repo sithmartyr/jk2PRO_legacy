@@ -1059,6 +1059,13 @@ void CG_DrawHUD(centity_t	*cent)
 	int	scoreBias;
 	char scoreBiasStr[16];
 
+	if (cg.jk2pro.detected || cg_speedometer.integer)
+		CG_CalculateSpeed(cent);
+
+	if (cg_speedometer.integer)
+		CG_Speedometer(cent);
+
+
 	if (cg_hudFiles.integer)
 	{
 		int x = 0;
@@ -4449,5 +4456,94 @@ void CG_DrawActive( stereoFrame_t stereoView ) {
  	CG_Draw2D();
 }
 
+double floorf(double x) {
+	return (int)x;
+}
+
+static void CG_CalculateSpeed(centity_t *cent) {
+	const vec_t * const velocity = (cent->currentState.clientNum == cg.clientNum ? cg.predictedPlayerState.velocity : cent->currentState.pos.trDelta);
+	//cg.jk2pro.currentSpeed = sqrtf(velocity[0] * velocity[0] + velocity[1] * velocity[1]); // is this right?
+	cg.jk2pro.currentSpeed = sqrt(velocity[0] * velocity[0] + velocity[1] * velocity[1]); // is this right?
+}
 
 
+static void CG_Speedometer(centity_t *cent)
+{
+#define ACCEL_SAMPLES 16
+	const char *accelStr, *accelStr2, *accelStr3;
+	char speedStr[32] = { 0 }, speedStr2[32] = { 0 }, speedStr3[32] = { 0 };
+	vec4_t colorSpeed = { 1, 1, 1, 1 };
+	const float currentSpeed = cg.jk2pro.currentSpeed;
+	static float lastSpeed = 0, previousAccels[ACCEL_SAMPLES];
+	const float accel = currentSpeed - lastSpeed;
+	float total, avgAccel;
+	int t, i;
+	unsigned int frameTime;
+	static unsigned int index;
+	static int	previous, lastupdate;
+
+	lastSpeed = currentSpeed;
+
+	if (currentSpeed > 250)
+	{
+		colorSpeed[1] = 1 / ((currentSpeed / 250)*(currentSpeed / 250));
+		colorSpeed[2] = 1 / ((currentSpeed / 250)*(currentSpeed / 250));
+	}
+
+	t = trap_Milliseconds();
+	frameTime = t - previous;
+	previous = t;
+	if (t - lastupdate > 5)	//don't sample faster than this
+	{
+		lastupdate = t;
+		previousAccels[index % ACCEL_SAMPLES] = accel;
+		index++;
+	}
+
+	total = 0;
+	for (i = 0; i < ACCEL_SAMPLES; i++) {
+		total += previousAccels[i];
+	}
+	if (!total) {
+		total = 1;
+	}
+	avgAccel = total / (float)ACCEL_SAMPLES - 0.0625f;//fucking why does it offset by this number
+
+	if (avgAccel > 0.0f)
+	{
+		accelStr = "^2µ:";
+		accelStr2 = "^2k:";
+		accelStr3 = "^2m: ";
+	}
+	else if (avgAccel < 0.0f)
+	{
+		accelStr = "^1µ:";
+		accelStr2 = "^1k:";
+		accelStr3 = "^1m: ";
+	}
+	else
+	{
+		accelStr = "^7µ:";
+		accelStr2 = "^7k:";
+		accelStr3 = "^7m: ";
+	}
+
+	if (cg_speedometer.integer == 1)
+	{
+		Com_sprintf(speedStr, sizeof(speedStr), "   %.0f", floorf(currentSpeed + 0.5f));
+		CG_Text_Paint(cg_speedometerX.integer, cg_speedometerY.integer, cg_speedometerSize.value, colorWhite, accelStr, 0.0f, 0, ITEM_ALIGN_RIGHT | ITEM_TEXTSTYLE_OUTLINED, FONT_NONE);
+		CG_Text_Paint(cg_speedometerX.integer, cg_speedometerY.integer, cg_speedometerSize.value, colorSpeed, speedStr, 0.0f, 0, ITEM_ALIGN_RIGHT | ITEM_TEXTSTYLE_OUTLINED, FONT_NONE);
+	}
+	else if (cg_speedometer.integer == 2)
+	{
+		Com_sprintf(speedStr2, sizeof(speedStr2), "   %.1f", currentSpeed * 0.05);
+		CG_Text_Paint(cg_speedometerX.integer, cg_speedometerY.integer, cg_speedometerSize.value, colorWhite, accelStr2, 0.0f, 0, ITEM_ALIGN_RIGHT | ITEM_TEXTSTYLE_OUTLINED, FONT_NONE);
+		CG_Text_Paint(cg_speedometerX.integer, cg_speedometerY.integer, cg_speedometerSize.value, colorSpeed, speedStr2, 0.0f, 0, ITEM_ALIGN_RIGHT | ITEM_TEXTSTYLE_OUTLINED, FONT_NONE);
+	}
+	else if (cg_speedometer.integer > 2)
+	{
+		Com_sprintf(speedStr3, sizeof(speedStr3), "   %.1f", currentSpeed * 0.03106855);
+		CG_Text_Paint(cg_speedometerX.integer, cg_speedometerY.integer, cg_speedometerSize.value, colorWhite, accelStr3, 0.0f, 0, ITEM_ALIGN_RIGHT | ITEM_TEXTSTYLE_OUTLINED, FONT_NONE);
+		CG_Text_Paint(cg_speedometerX.integer, cg_speedometerY.integer, cg_speedometerSize.value, colorSpeed, speedStr3, 0.0f, 0, ITEM_ALIGN_RIGHT | ITEM_TEXTSTYLE_OUTLINED, FONT_NONE);
+	}
+}

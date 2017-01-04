@@ -265,7 +265,11 @@ void G_RunObject( gentity_t *ent )
 			}
 //			G_Sound( ent, G_SoundIndex( "sound/movers/objects/objectHit.wav" ) );
 		}
-		DoImpact( ent, traceEnt, qtrue );
+		//DoImpact( ent, traceEnt, qtrue );
+		if (ent->s.weapon != WP_SABER)//jk2PRO - DM - Another weird bug getting fixed
+		{
+			DoImpact(ent, traceEnt, qtrue);
+		}
 	}
 
 	if ( !ent || (ent->takedamage&&ent->health <= 0) )

@@ -52,6 +52,7 @@
 #ifdef _WIN32
 
 //#pragma intrinsic( memset, memcpy )
+//#include <stdint.h>
 
 #endif
 
@@ -292,6 +293,9 @@ typedef int		sfxHandle_t;
 typedef int		fileHandle_t;
 typedef int		clipHandle_t;
 
+#define NULL_SFX ((sfxHandle_t)0)
+#define NULL_FILE ((fileHandle_t)0)
+#define NULL_CLIP ((clipHandle_t)0)
 
 #ifndef NULL
 #define NULL ((void *)0)
@@ -320,6 +324,8 @@ typedef int		clipHandle_t;
 #define	BIG_INFO_KEY		  8192
 #define	BIG_INFO_VALUE		8192
 
+#define NET_ADDRSTRMAXLEN 48
+
 
 #define	MAX_QPATH			64		// max length of a quake game pathname
 #ifdef PATH_MAX
@@ -331,6 +337,8 @@ typedef int		clipHandle_t;
 #define	MAX_NAME_LENGTH		32		// max length of a client name
 
 #define	MAX_SAY_TEXT	150
+
+#define ARRAY_LEN( x ) ( sizeof( x ) / sizeof( *(x) ) )
 
 // paramters for command buffer stuffing
 typedef enum {
@@ -670,6 +678,8 @@ extern	vec4_t		colorDkBlue;
 
 #define Q_COLOR_ESCAPE	'^'
 #define Q_IsColorString(p)	( p && *(p) == Q_COLOR_ESCAPE && *((p)+1) && *((p)+1) != Q_COLOR_ESCAPE )
+// Correct version of the above for Q_StripColor
+#define Q_IsColorStringExt(p)	((p) && *(p) == Q_COLOR_ESCAPE && *((p)+1) && *((p)+1) >= '0' && *((p)+1) <= '9') // ^[0-9]
 
 #define COLOR_BLACK		'0'
 #define COLOR_RED		'1'
@@ -741,7 +751,7 @@ float Q_rsqrt( float f );		// reciprocal square root
 signed char ClampChar( int i );
 signed short ClampShort( int i );
 
-float powf ( float x, int y );
+float Q_powf ( float x, int y );
 
 // this isn't a real cheap function to call!
 int DirToByte( vec3_t dir );
@@ -995,6 +1005,8 @@ int Q_isprint( int c );
 int Q_islower( int c );
 int Q_isupper( int c );
 int Q_isalpha( int c );
+//qboolean Q_isanumber(const char *s);
+qboolean Q_isintegral(float f);
 
 // portable case insensitive compare
 int		Q_stricmp (const char *s1, const char *s2);
@@ -1956,6 +1968,7 @@ typedef enum _flag_status {
 #define SAY_ALL		0
 #define SAY_TEAM	1
 #define SAY_TELL	2
+#define SAY_ADMIN	3
 
 #define CDKEY_LEN 16
 #define CDCHKSUM_LEN 2
@@ -2046,6 +2059,8 @@ enum {
 	FONT_MEDIUM,
 	FONT_LARGE
 };
+
+//typedef unsigned long size_t;
 
 
 

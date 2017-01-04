@@ -3,10 +3,311 @@
 
 #include "g_local.h"
 
+static int frametime = 25;
+static int numTrails = 10; //historytime/frametime; 
+
 void P_SetTwitchInfo(gclient_t	*client)
 {
 	client->ps.painTime = level.time;
 	client->ps.painDirection ^= 1;
+}
+
+/*
+============
+G_ResetTrail
+
+Clear out the given client's origin trails (should be called from ClientBegin and when
+the teleport bit is toggled)
+============
+*/
+void G_ResetTrail(gentity_t *ent) {
+	int		i, time;
+
+	// fill up the origin trails with data (assume the current position for the last 1/2 second or so)
+	ent->client->unlagged.trailHead = numTrails - 1;
+	for (i = ent->client->unlagged.trailHead, time = level.time; i >= 0; i--, time -= frametime) {
+		VectorCopy(ent->r.mins, ent->client->unlagged.trail[i].mins);
+		VectorCopy(ent->r.maxs, ent->client->unlagged.trail[i].maxs);
+		VectorCopy(ent->r.currentOrigin, ent->client->unlagged.trail[i].currentOrigin);
+		//VectorCopy( ent->r.currentAngles, ent->client->unlagged.trail[i].currentAngles );
+
+		ent->client->unlagged.trail[i].torsoAnim = ent->client->ps.torsoAnim;
+		ent->client->unlagged.trail[i].torsoTimer = ent->client->ps.torsoTimer;
+		ent->client->unlagged.trail[i].legsAnim = ent->client->ps.legsAnim;
+		ent->client->unlagged.trail[i].legsTimer = ent->client->ps.legsTimer;
+		ent->client->unlagged.trail[i].realAngle = ent->s.apos.trBase[YAW];
+
+		ent->client->unlagged.trail[i].leveltime = time;
+		ent->client->unlagged.trail[i].time = time;
+	}
+}
+
+/*
+===========================
+G_PredictPlayerClipVelocity
+
+Slide on the impacting surface
+===========================
+*/
+
+#define	OVERCLIP		1.001f
+
+void G_PredictPlayerClipVelocity(vec3_t in, vec3_t normal, vec3_t out) {
+	float	backoff;
+
+	// find the magnitude of the vector "in" along "normal"
+	backoff = DotProduct(in, normal);
+
+	// tilt the plane a bit to avoid floating-point error issues
+	if (backoff < 0) {
+		backoff *= OVERCLIP;
+	}
+	else {
+		backoff /= OVERCLIP;
+	}
+
+	// slide along
+	VectorMA(in, -backoff, normal, out);
+}
+
+/*
+========================
+G_PredictPlayerSlideMove
+
+Advance the given entity frametime seconds, sliding as appropriate
+========================
+*/
+#define	MAX_CLIP_PLANES	5
+
+qboolean G_PredictPlayerSlideMove(gentity_t *ent, float frametime) {
+	int			bumpcount, numbumps;
+	vec3_t		dir;
+	float		d;
+	int			numplanes;
+	vec3_t		planes[MAX_CLIP_PLANES];
+	vec3_t		primal_velocity, velocity, origin;
+	vec3_t		clipVelocity;
+	int			i, j, k;
+	trace_t	trace;
+	vec3_t		end;
+	float		time_left;
+	float		into;
+	vec3_t		endVelocity;
+	vec3_t		endClipVelocity;
+	//vec3_t		worldUp = { 0.0f, 0.0f, 1.0f };
+
+	numbumps = 4;
+
+	VectorCopy(ent->s.pos.trDelta, primal_velocity);
+	VectorCopy(primal_velocity, velocity);
+	VectorCopy(ent->s.pos.trBase, origin);
+
+	VectorCopy(velocity, endVelocity);
+
+	time_left = frametime;
+
+	numplanes = 0;
+
+	for (bumpcount = 0; bumpcount < numbumps; bumpcount++) {
+
+		// calculate position we are trying to move to
+		VectorMA(origin, time_left, velocity, end);
+
+		// see if we can make it there
+		JP_Trace(&trace, origin, ent->r.mins, ent->r.maxs, end, ent->s.number, ent->clipmask, qfalse, 0, 0);
+
+		if (trace.allsolid) {
+			// entity is completely trapped in another solid
+			VectorClear(velocity);
+			VectorCopy(origin, ent->s.pos.trBase);
+			return qtrue;
+		}
+
+		if (trace.fraction > 0) {
+			// actually covered some distance
+			VectorCopy(trace.endpos, origin);
+		}
+
+		if (trace.fraction == 1) {
+			break;		// moved the entire distance
+		}
+
+		time_left -= time_left * trace.fraction;
+
+		if (numplanes >= MAX_CLIP_PLANES) {
+			// this shouldn't really happen
+			VectorClear(velocity);
+			VectorCopy(origin, ent->s.pos.trBase);
+			return qtrue;
+		}
+
+		//
+		// if this is the same plane we hit before, nudge velocity
+		// out along it, which fixes some epsilon issues with
+		// non-axial planes
+		//
+		for (i = 0; i < numplanes; i++) {
+			if (DotProduct(trace.plane.normal, planes[i]) > 0.99) {
+				VectorAdd(trace.plane.normal, velocity, velocity);
+				break;
+			}
+		}
+
+		if (i < numplanes) {
+			continue;
+		}
+
+		VectorCopy(trace.plane.normal, planes[numplanes]);
+		numplanes++;
+
+		//
+		// modify velocity so it parallels all of the clip planes
+		//
+
+		// find a plane that it enters
+		for (i = 0; i < numplanes; i++) {
+			into = DotProduct(velocity, planes[i]);
+			if (into >= 0.1) {
+				continue;		// move doesn't interact with the plane
+			}
+
+			// slide along the plane
+			G_PredictPlayerClipVelocity(velocity, planes[i], clipVelocity);
+
+			// slide along the plane
+			G_PredictPlayerClipVelocity(endVelocity, planes[i], endClipVelocity);
+
+			// see if there is a second plane that the new move enters
+			for (j = 0; j < numplanes; j++) {
+				if (j == i) {
+					continue;
+				}
+
+				if (DotProduct(clipVelocity, planes[j]) >= 0.1) {
+					continue;		// move doesn't interact with the plane
+				}
+
+				// try clipping the move to the plane
+				G_PredictPlayerClipVelocity(clipVelocity, planes[j], clipVelocity);
+				G_PredictPlayerClipVelocity(endClipVelocity, planes[j], endClipVelocity);
+
+				// see if it goes back into the first clip plane
+				if (DotProduct(clipVelocity, planes[i]) >= 0) {
+					continue;
+				}
+
+				// slide the original velocity along the crease
+				CrossProduct(planes[i], planes[j], dir);
+				VectorNormalize(dir);
+				d = DotProduct(dir, velocity);
+				VectorScale(dir, d, clipVelocity);
+
+				CrossProduct(planes[i], planes[j], dir);
+				VectorNormalize(dir);
+				d = DotProduct(dir, endVelocity);
+				VectorScale(dir, d, endClipVelocity);
+
+				// see if there is a third plane the the new move enters
+				for (k = 0; k < numplanes; k++) {
+					if (k == i || k == j) {
+						continue;
+					}
+
+					if (DotProduct(clipVelocity, planes[k]) >= 0.1) {
+						continue;		// move doesn't interact with the plane
+					}
+
+					// stop dead at a tripple plane interaction
+					VectorClear(velocity);
+					VectorCopy(origin, ent->s.pos.trBase);
+					return qtrue;
+				}
+			}
+
+			// if we have fixed all interactions, try another move
+			VectorCopy(clipVelocity, velocity);
+			VectorCopy(endClipVelocity, endVelocity);
+			break;
+		}
+	}
+
+	VectorCopy(endVelocity, velocity);
+	VectorCopy(origin, ent->s.pos.trBase);
+
+	return (bumpcount != 0);
+}
+
+//This function is unused as of right now, do we really need it?
+/*
+============================
+G_PredictPlayerStepSlideMove
+
+Advance the given entity frametime seconds, stepping and sliding as appropriate
+============================
+*/
+#define	STEPSIZE 18
+
+void G_PredictPlayerStepSlideMove(gentity_t *ent, float frametime) {
+	vec3_t start_o, start_v, down_o, down_v;
+	vec3_t down, up;
+	trace_t trace;
+	float stepSize;
+	int NEW_STEPSIZE = STEPSIZE;
+
+	if (ent->client && (ent->client->sess.movementStyle == 3 || ent->client->sess.movementStyle == 4 || ent->client->sess.movementStyle == 6 || ent->client->sess.movementStyle == 7 || ent->client->sess.movementStyle == 8)) {
+		if (ent->client->ps.velocity[2] > 0 && ent->client->pers.cmd.upmove > 0) {
+			int jumpHeight = ent->client->ps.origin[2] - ent->client->ps.fd.forceJumpZStart;
+			//NEW_STEPSIZE = 46;
+
+			if (jumpHeight > 48)
+				jumpHeight = 48;
+			else if (jumpHeight < 22)
+				jumpHeight = 22;
+
+			NEW_STEPSIZE = 48 - jumpHeight + 22;
+		}
+		else
+			NEW_STEPSIZE = 22;
+	}
+
+	VectorCopy(ent->s.pos.trBase, start_o);
+	VectorCopy(ent->s.pos.trDelta, start_v);
+
+	if (!G_PredictPlayerSlideMove(ent, frametime)) {
+		// not clipped, so forget stepping
+		return;
+	}
+
+	VectorCopy(ent->s.pos.trBase, down_o);
+	VectorCopy(ent->s.pos.trDelta, down_v);
+
+	VectorCopy(start_o, up);
+	up[2] += NEW_STEPSIZE;
+
+	// test the player position if they were a stepheight higher
+	JP_Trace(&trace, start_o, ent->r.mins, ent->r.maxs, up, ent->s.number, ent->clipmask, qfalse, 0, 0);
+	if (trace.allsolid) {
+		return;		// can't step up
+	}
+
+	stepSize = trace.endpos[2] - start_o[2];
+
+	// try slidemove from this position
+	VectorCopy(trace.endpos, ent->s.pos.trBase);
+	VectorCopy(start_v, ent->s.pos.trDelta);
+
+	G_PredictPlayerSlideMove(ent, frametime);
+
+	// push down the final amount
+	VectorCopy(ent->s.pos.trBase, down);
+	down[2] -= stepSize;
+	JP_Trace(&trace, ent->s.pos.trBase, ent->r.mins, ent->r.maxs, down, ent->s.number, ent->clipmask, qfalse, 0, 0);
+	if (!trace.allsolid) {
+		VectorCopy(trace.endpos, ent->s.pos.trBase);
+	}
+	if (trace.fraction < 1.0) {
+		G_PredictPlayerClipVelocity(ent->s.pos.trDelta, trace.plane.normal, ent->s.pos.trDelta);
+	}
 }
 
 /*
@@ -579,6 +880,10 @@ void G_MoverTouchPushTriggers( gentity_t *ent, vec3_t oldOrg )
 	}
 }
 
+static void SV_PMTrace(trace_t *results, const vec3_t start, const vec3_t mins, const vec3_t maxs, const vec3_t end, int passEntityNum, int contentMask) {
+	JP_Trace(results, start, mins, maxs, end, passEntityNum, contentMask, qfalse, 0, 10); //JK2PRO loda, change this to ghoul2 for g2 player collision hitbox, could be useful for hockey maybe?
+}
+
 /*
 =================
 SpectatorThink
@@ -600,7 +905,7 @@ void SpectatorThink( gentity_t *ent, usercmd_t *ucmd ) {
 		pm.ps = &client->ps;
 		pm.cmd = *ucmd;
 		pm.tracemask = MASK_PLAYERSOLID & ~CONTENTS_BODY;	// spectators can fly through bodies
-		pm.trace = trap_Trace;
+		pm.trace = SV_PMTrace; //trap_Trace;
 		pm.pointcontents = trap_PointContents;
 
 		pm.animations = NULL;
@@ -688,6 +993,11 @@ void ClientTimerActions( gentity_t *ent, int msec ) {
 		if ( client->ps.stats[STAT_ARMOR] > client->ps.stats[STAT_MAX_HEALTH] ) {
 			client->ps.stats[STAT_ARMOR]--;
 		}
+
+		if (client->csTimeLeft) {//jk2pro send message and count down a second
+			trap_SendServerCommand(ent - g_entities, va("cp \"^7%s\n\"", ent->client->csMessage));
+			client->csTimeLeft--;
+		}
 	}
 }
 
@@ -749,6 +1059,9 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 				{
 					break;
 				}
+
+				if (ent->client && ent->client->sess.raceMode)
+					break;
 
 				if ( ent->s.eType != ET_PLAYER )
 				{
@@ -922,7 +1235,7 @@ static void G_UpdateJediMasterBroadcasts ( gentity_t *self )
 	int i;
 
 	// Not jedi master mode then nothing to do
-	if ( g_gametype.integer != GT_JEDIMASTER )
+	if (g_gametype.integer != GT_JEDIMASTER)
 	{
 		return;
 	}
@@ -1017,6 +1330,8 @@ void ClientThink_real( gentity_t *ent ) {
 //		G_Printf("serverTime >>>>>\n" );
 	} 
 
+	client->lastUpdateFrame = level.framenum; //Unlagged
+
 	msec = ucmd->serverTime - client->ps.commandTime;
 	// following others may result in bad times, but we still want
 	// to check for follow toggles
@@ -1032,6 +1347,46 @@ void ClientThink_real( gentity_t *ent ) {
 	}
 	else if (pmove_msec.integer > 33) {
 		trap_Cvar_Set("pmove_msec", "33");
+	}
+
+	if (!(ent->r.svFlags & SVF_BOT) && client->sess.sessionTeam != TEAM_SPECTATOR && g_forceLogin.integer && !client->pers.userName[0]) {
+		//SetTeam(ent, "spectator", qtrue);
+		SetTeam(ent, "spectator");
+		trap_SendServerCommand(ent - g_entities, "print \"^1You must login to join the game\n\"");
+	}
+
+	if (client->sess.sessionTeam == TEAM_FREE && !g_raceMode.integer) {
+		if (client->ps.stats[STAT_RACEMODE] || g_gametype.integer >= GT_TEAM) {
+			//SetTeam(ent, "spectator", qtrue);
+			SetTeam(ent, "spectator");
+			client->sess.raceMode = qfalse;
+			client->ps.stats[STAT_RACEMODE] = qfalse;
+		}
+	}
+
+	if (client->ps.stats[STAT_RACEMODE])
+		ucmd->serverTime = ((ucmd->serverTime + 7) / 8) * 8;//Integer math was making this bad, but is this even really needed? I guess for 125fps bhop height it is?
+	else if (pmove_fixed.integer || client->pers.pmoveFixed)
+		ucmd->serverTime = ((ucmd->serverTime + pmove_msec.integer - 1) / pmove_msec.integer) * pmove_msec.integer;
+
+	if ((client->sess.sessionTeam != TEAM_SPECTATOR) && !client->ps.stats[STAT_RACEMODE] && g_movementStyle.integer >= 0 && g_movementStyle.integer <= 6) { //Ok,, this should be like every frame, right??
+		client->sess.movementStyle = g_movementStyle.integer;
+	}
+	client->ps.stats[STAT_MOVEMENTSTYLE] = client->sess.movementStyle;
+
+	if (g_rabbit.integer && client->ps.powerups[PW_NEUTRALFLAG]) {
+		if (client->ps.fd.forcePowerLevel[FP_LEVITATION] > 1) {
+			client->savedJumpLevel = client->ps.fd.forcePowerLevel[FP_LEVITATION];
+			client->ps.fd.forcePowerLevel[FP_LEVITATION] = 1;
+		}
+	}
+	else if (client->savedJumpLevel) {
+		client->ps.fd.forcePowerLevel[FP_LEVITATION] = client->savedJumpLevel;
+	}
+	if (client->ps.stats[STAT_RACEMODE]) {
+		client->ps.fd.forcePowerLevel[FP_SABERATTACK] = 3; //make sure its allowed on server? or?
+		if (client->ps.stats[STAT_ONLYBHOP])
+			client->ps.fd.forcePowerLevel[FP_LEVITATION] = 3;
 	}
 
 	if ( pmove_fixed.integer || client->pers.pmoveFixed ) {
@@ -1065,6 +1420,16 @@ void ClientThink_real( gentity_t *ent ) {
 		}
 	}
 
+	if (ent && ent->client && ((ent->client->sess.movementStyle == 7) || (ent->client->sess.movementStyle == 8)) && ent->health > 0) {
+		ent->client->ps.stats[STAT_ARMOR] = ent->client->ps.stats[STAT_HEALTH] = ent->health = 100;
+		ent->client->ps.stats[STAT_WEAPONS] = (1 << WP_SABER) + (1 << WP_ROCKET_LAUNCHER);
+		ent->client->ps.ammo[AMMO_ROCKETS] = 2;
+	}
+	else if (ent && ent->client && ent->client->sess.raceMode) {
+		ent->client->ps.stats[STAT_WEAPONS] = (1 << WP_SABER) + (1 << WP_DISRUPTOR);
+		ent->client->ps.ammo[AMMO_ROCKETS] = 0;
+	}
+
 	// check for inactivity timer, but never drop the local client of a non-dedicated server
 	if ( !ClientInactivityTimer( client ) ) {
 		return;
@@ -1096,6 +1461,16 @@ void ClientThink_real( gentity_t *ent ) {
 
 	// set speed
 	client->ps.speed = g_speed.value;
+	if (client->sess.raceMode || client->ps.stats[STAT_RACEMODE])
+		client->ps.speed = 250.0f;
+	if (client->ps.stats[STAT_MOVEMENTSTYLE] == 2 || client->ps.stats[STAT_MOVEMENTSTYLE] == 3 || client->ps.stats[STAT_MOVEMENTSTYLE] == 4 || client->ps.stats[STAT_MOVEMENTSTYLE] == 6 || client->ps.stats[STAT_MOVEMENTSTYLE] == 7 || client->ps.stats[STAT_MOVEMENTSTYLE] == 8) {//qw is 320 too
+		if (client->sess.movementStyle == 2 || client->sess.movementStyle == 3 || client->sess.movementStyle == 4 || client->sess.movementStyle == 6 || client->sess.movementStyle == 7 || client->sess.movementStyle == 8) {
+			client->ps.speed *= 1.28f;//bring it up to 320 on g_speed 250 for vq3/wsw physics mode
+			//no haste yet :(
+			/*if (client->pers.haste)
+				client->ps.speed *= 1.3f;*/
+		}
+	}
 	client->ps.basespeed = g_speed.value;
 
 	if (ent->client->ps.duelInProgress)
@@ -1168,6 +1543,59 @@ void ClientThink_real( gentity_t *ent ) {
 			G_AddEvent(ent, EV_PRIVATE_DUEL, 0);
 			G_AddEvent(duelAgainst, EV_PRIVATE_DUEL, 0);
 
+			/*
+			trap_SendServerCommand( ent-g_entities, va("print \"%s %s\n\"", ent->client->pers.netname, G_GetStripEdString("SVINGAME", "PLDUELWINNER")) );
+			trap_SendServerCommand( duelAgainst-g_entities, va("print \"%s %s\n\"", ent->client->pers.netname, G_GetStripEdString("SVINGAME", "PLDUELWINNER")) );
+			*/
+			//Private duel announcements are now made globally because we only want one duel at a time.
+			if (ent->health > 0 && ent->client->ps.stats[STAT_HEALTH] > 0)
+			{
+				//trap_SendServerCommand( -1, va("cp \"%s %s %s!\n\"", ent->client->pers.netname, G_GetStripEdString("SVINGAME", "PLDUELWINNER"), duelAgainst->client->pers.netname) );
+				if (dueltypes[ent->client->ps.clientNum] == 0) {
+					trap_SendServerCommand(-1, va("cp \"%s^7 %s %s^7!\n\"", ent->client->pers.netname, G_GetStripEdString("SVINGAME", "PLDUELWINNER"), duelAgainst->client->pers.netname));
+					trap_SendServerCommand(-1, va("print \"%s^7 %s %s^7! (^1%i/^2%i^7) (Saber)\n\"", ent->client->pers.netname, G_GetStripEdString("SVINGAME", "PLDUELWINNER"), duelAgainst->client->pers.netname, ent->client->ps.stats[STAT_HEALTH], ent->client->ps.stats[STAT_ARMOR]));
+				}
+				else if (dueltypes[ent->client->ps.clientNum] == 1) {
+					trap_SendServerCommand(-1, va("cp \"%s^7 %s %s^7!\n\"", ent->client->pers.netname, G_GetStripEdString("SVINGAME", "PLDUELWINNER"), duelAgainst->client->pers.netname));
+					trap_SendServerCommand(-1, va("print \"%s^7 %s %s^7! (^1%i/^2%i^7) (Force)\n\"", ent->client->pers.netname, G_GetStripEdString("SVINGAME", "PLDUELWINNER"), duelAgainst->client->pers.netname, ent->client->ps.stats[STAT_HEALTH], ent->client->ps.stats[STAT_ARMOR]));
+				}
+				else {
+					trap_SendServerCommand(-1, va("cp \"%s^7 %s %s^7!\n\"", ent->client->pers.netname, G_GetStripEdString("SVINGAME", "PLDUELWINNER"), duelAgainst->client->pers.netname));
+					trap_SendServerCommand(-1, va("print \"%s^7 %s %s^7! (^1%i/^2%i^7) (Gun)\n\"", ent->client->pers.netname, G_GetStripEdString("SVINGAME", "PLDUELWINNER"), duelAgainst->client->pers.netname, ent->client->ps.stats[STAT_HEALTH], ent->client->ps.stats[STAT_ARMOR]));
+
+					if (dueltypes[ent->client->ps.clientNum] > 1) { //Not needed? o.0
+						int weapon = dueltypes[ent->client->ps.clientNum] - 1;
+
+						int i;
+						for (i = 1; i <= LAST_USEABLE_WEAPON; i++) {//Just to be safe, remove ALL weapons except saber to avoid abuse.
+							if (i == WP_SABER)
+								continue;
+
+							ent->client->ps.stats[STAT_WEAPONS] &= ~(1 << i);
+							duelAgainst->client->ps.stats[STAT_WEAPONS] &= ~(1 << i);
+						}
+
+						//if (weapon == LAST_USEABLE_WEAPON + 3)//All weapons
+						//{
+							//GiveClientWeapons(ent->client);
+							//GiveClientWeapons(duelAgainst->client);
+
+							
+						//}
+						//else if (weapon >= WP_BLASTER && weapon <= WP_DET_PACK) {
+							//if (weapon == WP_ROCKET_LAUNCHER)
+							//	ent->client->ps.ammo[weaponData[weapon].ammoIndex] = 3;
+							//else
+								//ent->client->ps.ammo[weaponData[weapon].ammoIndex] = (int)(ammoData[weaponData[weapon].ammoIndex].max * 0.5);
+						//}
+					}
+				}
+			}
+			else
+			{ //it was a draw, because we both managed to die in the same frame
+				trap_SendServerCommand( -1, va("cp \"%s\n\"", G_GetStripEdString("SVINGAME", "PLDUELTIE")) );
+			}
+
 			//Winner gets full health.. providing he's still alive
 			if (ent->health > 0 && ent->client->ps.stats[STAT_HEALTH] > 0)
 			{
@@ -1182,20 +1610,6 @@ void ClientThink_real( gentity_t *ent ) {
 					ent->client->invulnerableTimer = level.time + g_spawnInvulnerability.integer;
 				}
 			}
-
-			/*
-			trap_SendServerCommand( ent-g_entities, va("print \"%s %s\n\"", ent->client->pers.netname, G_GetStripEdString("SVINGAME", "PLDUELWINNER")) );
-			trap_SendServerCommand( duelAgainst-g_entities, va("print \"%s %s\n\"", ent->client->pers.netname, G_GetStripEdString("SVINGAME", "PLDUELWINNER")) );
-			*/
-			//Private duel announcements are now made globally because we only want one duel at a time.
-			if (ent->health > 0 && ent->client->ps.stats[STAT_HEALTH] > 0)
-			{
-				trap_SendServerCommand( -1, va("cp \"%s %s %s!\n\"", ent->client->pers.netname, G_GetStripEdString("SVINGAME", "PLDUELWINNER"), duelAgainst->client->pers.netname) );
-			}
-			else
-			{ //it was a draw, because we both managed to die in the same frame
-				trap_SendServerCommand( -1, va("cp \"%s\n\"", G_GetStripEdString("SVINGAME", "PLDUELTIE")) );
-			}
 		}
 		else
 		{
@@ -1205,7 +1619,7 @@ void ClientThink_real( gentity_t *ent ) {
 			VectorSubtract(ent->client->ps.origin, duelAgainst->client->ps.origin, vSub);
 			subLen = VectorLength(vSub);
 
-			if (subLen >= 1024)
+			if (subLen >= 1024 && g_duelDistanceLimit.integer)//[videoP - jk2PRO - Serverside - Duel - Remove duel distance limit]
 			{
 				ent->client->ps.duelInProgress = 0;
 				duelAgainst->client->ps.duelInProgress = 0;
@@ -1253,11 +1667,24 @@ void ClientThink_real( gentity_t *ent ) {
 	if (ent->client && ent->client->ps.fallingToDeath &&
 		(level.time - FALL_FADE_TIME) > ent->client->ps.fallingToDeath)
 	{ //die!
-		player_die(ent, ent, ent, 100000, MOD_FALLING);
-		respawn(ent);
-		ent->client->ps.fallingToDeath = 0;
+		if (ent->health > 0)
+		{
+			gentity_t *otherKiller = ent;
+			if (ent->client->ps.otherKillerTime > level.time && ent->client->ps.otherKiller != ENTITYNUM_NONE)
+			{
+				otherKiller = &g_entities[ent->client->ps.otherKiller];
 
-		G_MuteSound(ent->s.number, CHAN_VOICE); //stop screaming, because you are dead!
+				if (!otherKiller->inuse)
+					otherKiller = ent;
+			}
+			G_Damage(ent, otherKiller, otherKiller, NULL, ent->client->ps.origin, 9999, DAMAGE_NO_PROTECTION, MOD_FALLING);
+
+			//player_die(ent, ent, ent, 100000, MOD_FALLING);
+			//respawn(ent);
+			//ent->client->ps.fallingToDeath = 0;
+
+			G_MuteSound(ent->s.number, CHAN_VOICE); //stop screaming, because you are dead!
+		}
 	}
 
 	if (ent->client->ps.otherKillerTime > level.time &&
@@ -1296,7 +1723,7 @@ void ClientThink_real( gentity_t *ent ) {
 	else {
 		pm.tracemask = MASK_PLAYERSOLID;
 	}
-	pm.trace = trap_Trace;
+	pm.trace = SV_PMTrace; //trap_Trace;
 	pm.pointcontents = trap_PointContents;
 	pm.debugLevel = g_debugMove.integer;
 	pm.noFootsteps = ( g_dmflags.integer & DF_NO_FOOTSTEPS ) > 0;
@@ -1374,7 +1801,7 @@ void ClientThink_real( gentity_t *ent ) {
 		Cmd_ToggleSaber_f(ent);
 		break;
 	case GENCMD_ENGAGE_DUEL:
-		Cmd_EngageDuel_f(ent);
+		Cmd_EngageDuel_f(ent, 0);
 		break;
 	case GENCMD_FORCE_HEAL:
 		ForceHeal(ent);
@@ -1542,7 +1969,7 @@ void ClientThink_real( gentity_t *ent ) {
 	client->latched_buttons |= client->buttons & ~client->oldbuttons;
 
 	// Did we kick someone in our pmove sequence?
-	if (client->ps.forceKickFlip)
+	if (client->ps.forceKickFlip && !client->sess.raceMode)//saber. needed for jk2? o.0
 	{
 		gentity_t *faceKicked = &g_entities[client->ps.forceKickFlip-1];
 
@@ -1788,7 +2215,7 @@ void ClientEndFrame( gentity_t *ent ) {
 		BG_PlayerStateToEntityState( &ent->client->ps, &ent->s, qtrue );
 	}
 	SendPendingPredictableEvents( &ent->client->ps );
-
+	
 	// set the bit for the reachability area the client is currently in
 //	i = trap_AAS_PointReachabilityAreaIndex( ent->client->ps.origin );
 //	ent->client->areabits[i >> 3] |= 1 << (i & 7);

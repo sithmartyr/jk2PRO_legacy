@@ -5,9 +5,15 @@
 #include "q_shared.h"
 #include "bg_public.h"
 
+//This is a shitty way of doing this :S
+//This is used to compile a game, or a cgame.  Uncomment _GAME to compile game and comment it to compile cgame.
+//#define _GAME 1
+
 #ifdef QAGAME
-#include "g_local.h"
+//#ifdef _GAME
+//#include "g_local.h"
 #endif
+//#endif
 
 #ifdef UI_EXPORTS
 #include "../ui/ui_local.h"
@@ -15,9 +21,13 @@
 
 #ifndef UI_EXPORTS
 #ifndef QAGAME
+//#ifndef _GAME
 #include "../cgame/cg_local.h"
 #endif
 #endif
+//#endif
+
+int dueltypes[MAX_CLIENTS];//jk2PRO - Serverside - Fullforce Duels
 
 //rww - not putting @ in front of these because
 //we don't need them in a cgame striped lookup.
@@ -394,28 +404,29 @@ qboolean BG_LegalizedForcePowers(char *powerOut, int maxRank, qboolean freeSaber
 		}
 	}
 
+	//jk2PRO - Original code from 1.02 - Serverside - All - bugged force code goes bye bye - Start
+	/*
 	if (final_Powers[FP_SABERATTACK] < 1)
 	{
 		final_Powers[FP_SABERDEFEND] = 0;
 		final_Powers[FP_SABERTHROW] = 0;
 	}
+	*/
+	//jk2PRO - Original code from 1.02 - Serverside - All - bugged force code goes bye bye - End
 
 	if (freeSaber)
 	{
 		if (final_Powers[FP_SABERATTACK] < 1)
-		{
 			final_Powers[FP_SABERATTACK] = 1;
-		}
+		
 		if (final_Powers[FP_SABERDEFEND] < 1)
-		{
 			final_Powers[FP_SABERDEFEND] = 1;
-		}
 	}
 	if (final_Powers[FP_LEVITATION] < 1)
-	{
 		final_Powers[FP_LEVITATION] = 1;
-	}
 
+	//jk2PRO - Original code from 1.02 - Serverside - All - bugged force code goes bye bye - Start
+	/*
 	if (fpDisabled)
 	{
 		final_Powers[FP_LEVITATION] = 1;
@@ -423,6 +434,28 @@ qboolean BG_LegalizedForcePowers(char *powerOut, int maxRank, qboolean freeSaber
 		final_Powers[FP_SABERDEFEND] = 3;
 		final_Powers[FP_SABERTHROW] = 0;
 	}
+	*/
+	//jk2PRO - Original code from 1.02 - Serverside - All - bugged force code goes bye bye - End
+
+	//jk2PRO - Original code from 1.03 - Serverside - All - New 1.03 style force code - Start
+	if (fpDisabled) 
+	{
+		if (fpDisabled & (1 << FP_LEVITATION))
+			final_Powers[FP_LEVITATION] = 1;
+		
+		if (fpDisabled & (1 << FP_SABERATTACK))
+			final_Powers[FP_SABERATTACK] = 3;
+
+		if (fpDisabled & (1 << FP_SABERDEFEND))
+			final_Powers[FP_SABERDEFEND] = 3;
+	}
+
+	if (final_Powers[FP_SABERATTACK] < 1)
+	{
+		final_Powers[FP_SABERDEFEND] = 0;
+		final_Powers[FP_SABERTHROW] = 0;
+	}
+	//jk2PRO - Original code from 1.03 - Serverside - All - New 1.03 style force code - End
 
 	//We finally have all the force powers legalized and stored locally.
 	//Put them all into the string and return the result. We already have
@@ -1278,14 +1311,23 @@ qboolean BG_CanUseFPNow(int gametype, playerState_t *ps, int time, forcePowers_t
 
 	if (ps->duelInProgress)
 	{
-		if (power != FP_SABERATTACK && power != FP_SABERDEFEND && power != FP_SABERTHROW &&
-			power != FP_LEVITATION)
-		{
-			if (!ps->saberLockFrame || power != FP_PUSH)
+		//jk2PRO - Serverside - Add fullforce duels - Start
+		switch (dueltypes[ps->clientNum]) {
+		case 1: //force duel
+			break;
+		case 0: //normal duel
+		default:
+			if (power != FP_SABERATTACK && power != FP_SABERDEFEND && power != FP_SABERTHROW &&
+				power != FP_LEVITATION)
 			{
-				return qfalse;
+				if (!ps->saberLockFrame || power != FP_PUSH)
+				{
+					return qfalse;
+				}
 			}
+			break;
 		}
+		//jk2PRO - Serverside - Add fullforce duels - End
 	}
 
 	if (ps->saberLockFrame || ps->saberLockTime > time)
@@ -1572,11 +1614,11 @@ Returns false if the item should not be picked up.
 This needs to be the same for client side prediction and server use.
 ================
 */
-qboolean BG_CanItemBeGrabbed( int gametype, const entityState_t *ent, const playerState_t *ps ) {
+qboolean BG_CanItemBeGrabbed(int gametype, const entityState_t *ent, const playerState_t *ps) {
 	gitem_t	*item;
 
-	if ( ent->modelindex < 1 || ent->modelindex >= bg_numItems ) {
-		Com_Error( ERR_DROP, "BG_CanItemBeGrabbed: index out of range" );
+	if (ent->modelindex < 1 || ent->modelindex >= bg_numItems) {
+		Com_Error(ERR_DROP, "BG_CanItemBeGrabbed: index out of range");
 	}
 
 	item = &bg_itemlist[ent->modelindex];
@@ -1586,9 +1628,20 @@ qboolean BG_CanItemBeGrabbed( int gametype, const entityState_t *ent, const play
 		return qfalse;
 	}
 
-	if (ps && ps->duelInProgress)
+	if (ps && ps->duelInProgress && dueltypes[ps->clientNum] != 1)//jk2PRO - DM - Code to allow clients in force duels to pick up stuff
 	{ //no picking stuff up while in a duel, no matter what the type is
 		return qfalse;
+	}
+
+	if (ps && ps->stats[STAT_RACEMODE] && item && (item->giTag != PW_YSALAMIRI) && (item->giTag != PW_FORCE_BOON)) //no picking up shit in racemode
+		return qfalse;
+	
+	if (ps && ps->duelInProgress && dueltypes[ps->clientNum] == 1)//FF duel
+	{
+		if ((item->giType == IT_HOLDABLE && item->giTag == HI_MEDPAC) || (item->giType == IT_HEALTH || item->giType == IT_ARMOR)) {//We are picking up HP or SH
+		}
+		else
+			return qfalse;//Very naughty! You cannot pick up anything but HP & SH in FF duels
 	}
 
 	switch( item->giType ) {
@@ -2524,4 +2577,61 @@ char *BG_StringAlloc ( const char *source )
 qboolean BG_OutOfMemory ( void )
 {
 	return bg_poolSize >= MAX_POOL_SIZE;
+}
+
+const char *gametypeStringShort[GT_MAX_GAME_TYPE] = {
+	"FFA",
+	"HOLO",
+	"JM",
+	"1v1",
+	"SP",
+	"TDM",
+	"SAGA",
+	"CTF",
+	"CTY"
+};
+
+const char *BG_GetGametypeString(int gametype)
+{
+	switch (gametype)
+	{
+	case GT_FFA:
+		return "Free For All";
+	case GT_HOLOCRON:
+		return "Holocron";
+	case GT_JEDIMASTER:
+		return "Jedi Master";
+	case GT_TOURNAMENT:
+		return "Duel";
+	case GT_SINGLE_PLAYER:
+		return "Cooperative";
+	case GT_TEAM:
+		return "Team Deathmatch";
+	case GT_SAGA:
+		return "Saga";
+	case GT_CTF:
+		return "Capture The Flag";
+	case GT_CTY:
+		return "Capture The Ysalimiri";
+	default:
+		return "Unknown Gametype";
+	}
+}
+
+int BG_GetGametypeForString(const char *gametype)
+{
+	if (!Q_stricmp(gametype, "ffa")
+		|| !Q_stricmp(gametype, "dm"))			return GT_FFA;
+	else if (!Q_stricmp(gametype, "holocron"))		return GT_HOLOCRON;
+	else if (!Q_stricmp(gametype, "jm"))			return GT_JEDIMASTER;
+	else if (!Q_stricmp(gametype, "duel"))			return GT_TOURNAMENT;
+	else if (!Q_stricmp(gametype, "sp")
+		|| !Q_stricmp(gametype, "coop"))			return GT_SINGLE_PLAYER;
+	else if (!Q_stricmp(gametype, "tdm")
+		|| !Q_stricmp(gametype, "tffa")
+		|| !Q_stricmp(gametype, "team"))			return GT_TEAM;
+	else if (!Q_stricmp(gametype, "saga"))			return GT_SAGA;
+	else if (!Q_stricmp(gametype, "ctf"))			return GT_CTF;
+	else if (!Q_stricmp(gametype, "cty"))			return GT_CTY;
+	else												return -1;
 }

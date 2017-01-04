@@ -86,6 +86,8 @@
 #define DEFAULT_REDTEAM_NAME		"Empire"
 #define DEFAULT_BLUETEAM_NAME		"Rebellion"
 
+extern int dueltypes[MAX_CLIENTS];//jk2PRO - Serverside - Fullforce Duels
+
 typedef enum {
 	FOOTSTEP_NORMAL,
 	FOOTSTEP_METAL,
@@ -859,6 +861,20 @@ Ghoul2 Insert End
 */
 
 	char				sharedBuffer[MAX_CG_SHARED_BUFFER_SIZE];
+
+
+	struct {
+		qboolean		detected;
+		unsigned int		displacement, displacementSamples; //Speedometer, racetimer stuff
+		float				maxSpeed, currentSpeed;
+		int					lastCheckPointPrintTime;
+		int					timerStartTime;
+		vec4_t				strafeHelperActiveColor;
+		//char				logStrafeTrailFilename[MAX_QPATH];
+		//qboolean			loggingStrafeTrail;
+		//fileHandle_t		strafeTrailFileHandle;
+		//clientCheckpoint_t	clientCheckpoints[MAX_CLIENT_CHECKPOINTS];//japro checkpoints
+	} jk2pro;
 } cg_t;
 
 #define MAX_TICS	14
@@ -1470,6 +1486,12 @@ extern	vmCvar_t		cg_auraShell;
 extern	vmCvar_t		cg_animBlend;
 
 extern	vmCvar_t		cg_dismember;
+
+//jk2pro Client Cvars
+extern	vmCvar_t		cg_speedometer;
+extern	vmCvar_t		cg_speedometerX;
+extern	vmCvar_t		cg_speedometerY;
+extern	vmCvar_t		cg_speedometerSize;
 
 extern	vmCvar_t		cg_thirdPerson;
 extern	vmCvar_t		cg_thirdPersonRange;

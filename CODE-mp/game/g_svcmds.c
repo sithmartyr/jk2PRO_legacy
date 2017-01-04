@@ -389,6 +389,258 @@ void	Svcmd_ForceTeam_f( void ) {
 
 char	*ConcatArgs( int start );
 
+void Svcmd_Say_f(void) {
+	char *p = NULL;
+	// don't let text be too long for malicious reasons
+	char text[MAX_SAY_TEXT] = { 0 };
+
+	if (trap_Argc() < 2)
+		return;
+
+	p = ConcatArgs(1);
+
+	if (strlen(p) >= MAX_SAY_TEXT) {
+		p[MAX_SAY_TEXT - 1] = '\0';
+		//G_SecurityLogPrintf("Cmd_Say_f from -1 (server) has been truncated: %s\n", p);
+	}
+
+	Q_strncpyz(text, p, sizeof(text));
+	Q_strstrip(text, "\n\r", "  ");
+
+	G_LogPrintf("say: server: %s\n", text);
+	trap_SendServerCommand(-1, va("print \"server: %s\n\"", text));
+}
+
+typedef struct bitInfo_S {
+	const char	*string;
+} bitInfo_T;
+
+static bitInfo_T adminOptions[] = {
+	{ "Amtele" },//0
+	//{ "Amfreeze" },//1
+	{ "Amtelemark" },//2
+	//{ "Amban" },//3
+	//{ "Amkick" },//4
+	{ "Noclip" },//5
+	//{ "Grantadmin" },//6
+	//{ "Ammap" },//7
+	//{ "Ampsay" },//8
+	//{ "Amforceteam" },//9
+	//{ "Amlockteam" },//10
+	//{ "Amvstr" },//11
+	//{ "See IPs" },//12
+	//{ "Amrename" },//13
+	{ "Amlistmaps" },//14
+	//{ "Rebuild highscores (?)" },//15
+	//{ "Amwhois" },//16
+	//{ "Amlookup" },//17
+	//{ "Use hide" },//18
+	//{ "See hiders" },//19
+	{ "Callvote" },//20
+	{ "Killvote" }//21
+};
+static const int MAX_ADMIN_OPTIONS = ARRAY_LEN(adminOptions);
+
+void Svcmd_ToggleAdmin_f(void) {
+	if (trap_Argc() == 1) {
+		Com_Printf("Usage: toggleAdmin <admin level (full or junior) admin option>\n");
+		return;
+	}
+	else if (trap_Argc() == 2) {
+		int i = 0, level;
+		char arg1[8] = { 0 };
+
+		trap_Argv(1, arg1, sizeof(arg1));
+		if (!Q_stricmp(arg1, "j") || !Q_stricmp(arg1, "junior"))
+			level = 0;
+		else if (!Q_stricmp(arg1, "f") || !Q_stricmp(arg1, "full"))
+			level = 1;
+		else {
+			Com_Printf("Usage: toggleAdmin <admin level (full or junior) admin option>\n");
+			return;
+		}
+
+		for (i = 0; i < MAX_ADMIN_OPTIONS; i++) {
+			if (level == 0) {
+				if ((g_juniorAdminLevel.integer & (1 << i))) {
+					Com_Printf("%2d [X] %s\n", i, adminOptions[i].string);
+				}
+				else {
+					Com_Printf("%2d [ ] %s\n", i, adminOptions[i].string);
+				}
+			}
+			else if (level == 1) {
+				if ((g_fullAdminLevel.integer & (1 << i))) {
+					Com_Printf("%2d [X] %s\n", i, adminOptions[i].string);
+				}
+				else {
+					Com_Printf("%2d [ ] %s\n", i, adminOptions[i].string);
+				}
+			}
+		}
+		return;
+	}
+	else {
+		char arg1[8] = { 0 }, arg2[8] = { 0 };
+		int index, level;
+		const unsigned long int mask = (1 << MAX_ADMIN_OPTIONS) - 1;
+
+		trap_Argv(1, arg1, sizeof(arg1));
+		if (!Q_stricmp(arg1, "j") || !Q_stricmp(arg1, "junior"))
+			level = 0;
+		else if (!Q_stricmp(arg1, "f") || !Q_stricmp(arg1, "full"))
+			level = 1;
+		else {
+			Com_Printf("Usage: toggleAdmin <admin level (full or junior) admin option>\n");
+			return;
+		}
+		trap_Argv(2, arg2, sizeof(arg2));
+		index = atoi(arg2);
+
+		if (index < 0 || index >= MAX_ADMIN_OPTIONS) {
+			Com_Printf("toggleAdmin: Invalid range: %i [0, %i]\n", index, MAX_ADMIN_OPTIONS - 1);
+			return;
+		}
+
+		if (level == 0) {
+			trap_Cvar_Set("g_juniorAdminLevel", va("%i", (1 << index) ^ (g_juniorAdminLevel.integer & mask)));
+			trap_Cvar_Update(&g_juniorAdminLevel);
+
+			Com_Printf("%s %s^7\n", adminOptions[index].string, ((g_juniorAdminLevel.integer & (1 << index))
+				? "^2Enabled" : "^1Disabled"));
+		}
+		else if (level == 1) {
+			trap_Cvar_Set("g_fullAdminLevel", va("%i", (1 << index) ^ (g_fullAdminLevel.integer & mask)));
+			trap_Cvar_Update(&g_fullAdminLevel);
+
+			Com_Printf("%s %s^7\n", adminOptions[index].string, ((g_fullAdminLevel.integer & (1 << index))
+				? "^2Enabled" : "^1Disabled"));
+		}
+	}
+}
+
+static bitInfo_T voteOptions[] = {
+	{ "Capturelimit" },//1
+	{ "Clientkick" },//2
+	{ "Forcespec" },//3
+	{ "Fraglimit" },//4
+	{ "g_doWarmup" },//5
+	{ "g_gametype" },//6
+	{ "kick" },//7
+	{ "map" },//8
+	{ "map_restart" },//9
+	{ "nextmap" },//10
+	{ "sv_maxteamsize" },//11
+	{ "timelimit" },//12
+	{ "vstr" },//13
+	{ "poll" },//14
+	{ "pause" },//15
+	{ "score_restart" }//16
+};
+static const int MAX_VOTE_OPTIONS = ARRAY_LEN(voteOptions);
+
+void Svcmd_ToggleVote_f(void) {
+	if (trap_Argc() == 1) {
+		int i = 0;
+		for (i = 0; i < MAX_VOTE_OPTIONS; i++) {
+			if ((g_allowVote.integer & (1 << i))) {
+				//trap_Print("%2d [X] %s\n", i, voteOptions[i].string);
+				Com_Printf("%2d [X] %s\n", i, voteOptions[i].string);
+			}
+			else {
+				Com_Printf("%2d [ ] %s\n", i, voteOptions[i].string);
+			}
+		}
+		return;
+	}
+	else {
+		char arg[8] = { 0 };
+		int index;
+		const unsigned long int mask = (1 << MAX_VOTE_OPTIONS) - 1;
+
+		trap_Argv(1, arg, sizeof(arg));
+		index = atoi(arg);
+
+		//DM Start: New -1 toggle all options.
+		if (index < -1 || index >= MAX_VOTE_OPTIONS) {  //Whereas we need to allow -1 now, we must change the limit for this value.
+			Com_Printf("toggleVote: Invalid range: %i [0-%i, or -1 for toggle all]\n", index, MAX_VOTE_OPTIONS - 1);
+			return;
+		}
+
+		if (index == -1) {
+			for (index = 0; index < MAX_VOTE_OPTIONS; index++) {  //Read every tweak option and set it to the opposite of what it is currently set to.
+				trap_Cvar_Set("g_allowVote", va("%i", (1 << index) ^ (g_allowVote.integer & mask)));
+				trap_Cvar_Update(&g_allowVote);
+				Com_Printf("%s %s^7\n", voteOptions[index].string, ((g_allowVote.integer & (1 << index)) ? "^2Enabled" : "^1Disabled"));
+			}
+		} //DM End: New -1 toggle all options.
+
+		trap_Cvar_Set("g_allowVote", va("%i", (1 << index) ^ (g_allowVote.integer & mask)));
+		trap_Cvar_Update(&g_allowVote);
+
+		Com_Printf("%s %s^7\n", voteOptions[index].string, ((g_allowVote.integer & (1 << index))
+			? "^2Enabled" : "^1Disabled"));
+	}
+}
+
+static bitInfo_T voteTweaks[] = {
+	{ "Allow spec callvote in siege gametype" },//1
+	{ "Allow spec callvote in CTF/TFFA gametypes" },//2
+	{ "Clear vote when going to spectate" },//3
+	{ "Dont allow callvote for 30s after mapload" },//4
+	{ "Floodprotect callvotes by IP" },//5
+	{ "Dont allow map callvotes for 10 minutes at start of each map" },//6
+	{ "Add vote delay for map callvotes only" },//7
+	{ "Allow voting from spectate" },//8
+	{ "Show votes in console" },//9
+	{ "Only count voters in pass/fail calculation" },//10
+	{ "Fix mapchange after gametype vote" }//11
+};
+static const int MAX_VOTE_TWEAKS = ARRAY_LEN(voteTweaks);
+
+void Svcmd_ToggleTweakVote_f(void) {
+	if (trap_Argc() == 1) {
+		int i = 0;
+		for (i = 0; i < MAX_VOTE_TWEAKS; i++) {
+			if ((g_tweakVote.integer & (1 << i))) {
+				Com_Printf("%2d [X] %s\n", i, voteTweaks[i].string);
+			}
+			else {
+				Com_Printf("%2d [ ] %s\n", i, voteTweaks[i].string);
+			}
+		}
+		return;
+	}
+	else {
+		char arg[8] = { 0 };
+		int index;
+		const unsigned long int mask = (1 << MAX_VOTE_TWEAKS) - 1;
+
+		trap_Argv(1, arg, sizeof(arg));
+		index = atoi(arg);
+
+		//DM Start: New -1 toggle all options.
+		if (index < -1 || index >= MAX_VOTE_TWEAKS) {  //Whereas we need to allow -1 now, we must change the limit for this value.
+			Com_Printf("tweakVote: Invalid range: %i [0-%i, or -1 for toggle all]\n", index, MAX_VOTE_TWEAKS - 1);
+			return;
+		}
+
+		if (index == -1) {
+			for (index = 0; index < MAX_VOTE_TWEAKS; index++) {  //Read every tweak option and set it to the opposite of what it is currently set to.
+				trap_Cvar_Set("g_tweakVote", va("%i", (1 << index) ^ (g_tweakVote.integer & mask)));
+				trap_Cvar_Update(&g_tweakVote);
+				Com_Printf("%s %s^7\n", voteTweaks[index].string, ((g_tweakVote.integer & (1 << index)) ? "^2Enabled" : "^1Disabled"));
+			}
+		} //DM End: New -1 toggle all options.
+
+		trap_Cvar_Set("g_tweakVote", va("%i", (1 << index) ^ (g_tweakVote.integer & mask)));
+		trap_Cvar_Update(&g_tweakVote);
+
+		Com_Printf("%s %s^7\n", voteTweaks[index].string, ((g_tweakVote.integer & (1 << index))
+			? "^2Enabled" : "^1Disabled"));
+	}
+}
+
 /*
 =================
 ConsoleCommand
@@ -399,6 +651,21 @@ qboolean	ConsoleCommand( void ) {
 	char	cmd[MAX_TOKEN_CHARS];
 
 	trap_Argv( 0, cmd, sizeof( cmd ) );
+
+	if (Q_stricmp(cmd, "toggleAdmin") == 0) {
+		Svcmd_ToggleAdmin_f();
+		return qtrue;
+	}
+
+	if (Q_stricmp(cmd, "togglevote") == 0) {
+		Svcmd_ToggleVote_f();
+		return qtrue;
+	}
+
+	if (Q_stricmp(cmd, "tweakvote") == 0) {
+		Svcmd_ToggleTweakVote_f();
+		return qtrue;
+	}
 
 	if ( Q_stricmp (cmd, "entitylist") == 0 ) {
 		Svcmd_EntityList_f();
@@ -447,14 +714,13 @@ qboolean	ConsoleCommand( void ) {
 
 	if (g_dedicated.integer) {
 		if (Q_stricmp (cmd, "say") == 0) {
-			trap_SendServerCommand( -1, va("print \"server: %s\"", ConcatArgs(1) ) );
+			Svcmd_Say_f();
 			return qtrue;
 		}
 		// everything else will also be printed as a say command
-		trap_SendServerCommand( -1, va("print \"server: %s\"", ConcatArgs(0) ) );
-		return qtrue;
+		//trap_SendServerCommand( -1, va("print \"server: %s\"", ConcatArgs(0) ) );
+		return qfalse;
 	}
-
 	return qfalse;
 }
 

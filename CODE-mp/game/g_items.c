@@ -1145,7 +1145,7 @@ int Pickup_Powerup( gentity_t *ent, gentity_t *other ) {
 
     // if same team in team game, no sound
     // cannot use OnSameTeam as it expects to g_entities, not clients
-  	if ( g_gametype.integer >= GT_TEAM && other->client->sess.sessionTeam == client->sess.sessionTeam  ) {
+		if (g_gametype.integer >= GT_TEAM && other->client->sess.sessionTeam == client->sess.sessionTeam) {
       continue;
     }
 
@@ -1262,7 +1262,7 @@ int Pickup_Weapon (gentity_t *ent, gentity_t *other) {
 	G_LogWeaponPickup(other->s.number, ent->item->giTag);
 	
 	// team deathmatch has slow weapon respawns
-	if ( g_gametype.integer == GT_TEAM ) 
+	if (g_gametype.integer == GT_TEAM ) 
 	{
 		return adjustRespawnTime(RESPAWN_TEAM_WEAPON, ent->item->giType, ent->item->giTag);
 	}
@@ -1931,7 +1931,7 @@ void G_CheckTeamItems( void ) {
 	// Set up team stuff
 	Team_InitGame();
 
-	if( g_gametype.integer == GT_CTF || g_gametype.integer == GT_CTY ) {
+	if (g_gametype.integer == GT_CTF || g_gametype.integer == GT_CTY) {
 		gitem_t	*item;
 
 		// check for the two flags

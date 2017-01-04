@@ -325,7 +325,7 @@ qboolean WP_ForcePowerUsable( gentity_t *self, forcePowers_t forcePower );
 
 int IsTeamplay(void)
 {
-	if ( g_gametype.integer < GT_TEAM )
+	if (g_gametype.integer < GT_TEAM)
 	{
 		return 0;
 	}
@@ -1660,6 +1660,9 @@ int PassStandardEnemyChecks(bot_state_t *bs, gentity_t *en)
 	{
 		return 0;
 	}
+
+	if (en->client->sess.raceMode)
+		return 0;
 
 	if (en->health < 1)
 	{
@@ -5641,7 +5644,7 @@ int BotWeaponBlockable(int weapon)
 	}
 }
 
-void Cmd_EngageDuel_f(gentity_t *ent);
+//void Cmd_EngageDuel_f(gentity_t *ent);
 void Cmd_ToggleSaber_f(gentity_t *ent);
 
 void StandardBotAI(bot_state_t *bs, float thinktime)

@@ -1578,6 +1578,13 @@ static void WP_FireRocket( gentity_t *ent, qboolean altFire )
 	int dif = 0;
 	float rTime;
 	gentity_t *missile;
+	qboolean q3style = qfalse;
+
+	if (ent->client && ent->client->sess.raceMode) {
+		q3style = qtrue;
+		damage = 100; //force default dmg/vel for racers
+		vel = 900;
+	}
 
 	if ( altFire )
 	{
@@ -2713,6 +2720,9 @@ void FireWeapon( gentity_t *ent, qboolean altFire ) {
 	} else {
 		s_quadFactor = 1;
 	}
+
+	if (ent->client && ent->client->sess.raceMode && !((ent->client->sess.movementStyle == 7) || (ent->client->sess.movementStyle == 8)))
+		return;
 
 	// track shots taken for accuracy tracking.  Grapple is not a weapon and gauntet is just not tracked
 	if( ent->s.weapon != WP_SABER && ent->s.weapon != WP_STUN_BATON ) 

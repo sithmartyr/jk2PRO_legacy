@@ -11,6 +11,7 @@ bg_panimate
 bg_slidemove
 bg_weapons
 bg_saber
+g_account
 g_active
 g_arenas
 g_bot

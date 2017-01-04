@@ -907,7 +907,7 @@ qboolean CalculateUntouchable(gentity_t *ent)
 	int			playTime;
 	playTime = (level.time - ent->client->pers.enterTime)/60000;
 
-	if ( g_gametype.integer == GT_JEDIMASTER && ent->client->ps.isJediMaster )
+	if (g_gametype.integer == GT_JEDIMASTER && ent->client->ps.isJediMaster)
 	{//Jedi Master (was Borg queen) can only be killed once anyway
 		return qfalse;
 	}
@@ -997,7 +997,7 @@ qboolean CalculateTactician(gentity_t *ent, int *kills)
 	{//duh, only 1 weapon
 		return qfalse;
 	}
-	if ( g_gametype.integer == GT_JEDIMASTER && ent->client->ps.isJediMaster )
+	if (g_gametype.integer == GT_JEDIMASTER && ent->client->ps.isJediMaster)
 	{//Jedi Master (was Borg queen) has only 1 weapon
 		return qfalse;
 	}

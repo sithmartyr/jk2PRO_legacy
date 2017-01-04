@@ -421,6 +421,12 @@ vmCvar_t	cg_animBlend;
 
 vmCvar_t	cg_dismember;
 
+//jk2pro Client Cvars
+vmCvar_t	cg_speedometer;
+vmCvar_t	cg_speedometerX;
+vmCvar_t	cg_speedometerY;
+vmCvar_t	cg_speedometerSize;
+
 vmCvar_t	cg_thirdPerson;
 vmCvar_t	cg_thirdPersonRange;
 vmCvar_t	cg_thirdPersonAngle;
@@ -563,8 +569,14 @@ static cvarTable_t cvarTable[] = { // bk001129
 
 	{ &cg_dismember, "cg_dismember", "0", 0 },
 
+	//jk2pro Client Cvars
+	{ &cg_speedometer, "cg_speedometer", "0", 0 },
+	{ &cg_speedometerX, "cg_speedometerX", "132", 0 },
+	{ &cg_speedometerY, "cg_speedometerY", "459", 0 },
+	{ &cg_speedometerSize, "cg_speedometerSize", "0.75", 0 },
+
 	{ &cg_thirdPerson, "cg_thirdPerson", "0", 0 },
-	{ &cg_thirdPersonRange, "cg_thirdPersonRange", "80", CVAR_CHEAT },
+	{ &cg_thirdPersonRange, "cg_thirdPersonRange", "100", },
 	{ &cg_thirdPersonAngle, "cg_thirdPersonAngle", "0", CVAR_CHEAT },
 	{ &cg_thirdPersonPitchOffset, "cg_thirdPersonPitchOffset", "0", CVAR_CHEAT },
 	{ &cg_thirdPersonVertOffset, "cg_thirdPersonVertOffset", "16", CVAR_CHEAT },

@@ -535,6 +535,7 @@ void WP_SpawnInitForcePowers( gentity_t *ent )
 
 int ForcePowerUsableOn(gentity_t *attacker, gentity_t *other, forcePowers_t forcePower)
 {
+
 	if (other && other->client && other->client->ps.usingATST)
 	{
 		return 0;
@@ -550,16 +551,50 @@ int ForcePowerUsableOn(gentity_t *attacker, gentity_t *other, forcePowers_t forc
 		return 0;
 	}
 
-	//Dueling fighters cannot use force powers on others, with the exception of force push when locked with each other
-	if (attacker && attacker->client && attacker->client->ps.duelInProgress)
-	{
+	if (other && other->client && other->client->noclip)//jk2pro fix noclip abuse
 		return 0;
-	}
+	if (attacker && attacker->client && attacker->client->noclip)//jk2pro fix noclip abuse
+		return 0;
+	if (attacker && attacker->client && attacker->client->sess.raceMode)//not needed?
+		return 0;
+	if (other && other->client && other->client->sess.raceMode)//fix having forcepowers used on you when in racemode
+		return 0;
 
-	if (other && other->client && other->client->ps.duelInProgress)
+	//jk2PRO - Serverside - Fullforce Duels - Start
+	//Dueling fighters cannot use force powers on others, with the exception of force push when locked with each other
+	if (attacker && attacker->client && attacker->client->ps.duelInProgress) {
+		//// is the other player in a duel too?
+		if (other && other->client && other->client->ps.duelInProgress) {
+			//// yes both players are dueling -- with each other? 
+			if (dueltypes[attacker->client->ps.clientNum] == 1 && other->s.number == attacker->client->ps.duelIndex) {
+				//force duel
+				//return 1; //wonderful, im a retard
+			}
+			else
+				//normal & melee duel
+				return 0;
+		}
+		else {
+			//not in a duel
+			return 0;
+		}
+	}
+	else if (other && other->client && other->client->ps.duelInProgress) //Attacker is not dueling, but Other is, so dont let them use force on him
 	{
 		return 0;
 	}
+	//jk2PRO - Serverside - Fullforce Duels - End
+
+	//Dueling fighters cannot use force powers on others, with the exception of force push when locked with each other
+	/*if (attacker && attacker->client && attacker->client->ps.duelInProgress)
+	{
+		return 0;
+	}*/
+
+	/*if (other && other->client && other->client->ps.duelInProgress)
+	{
+		return 0;
+	}*/
 
 	return 1;
 }
@@ -600,6 +635,9 @@ qboolean WP_ForcePowerInUse( gentity_t *self, forcePowers_t forcePower )
 
 qboolean WP_ForcePowerUsable( gentity_t *self, forcePowers_t forcePower )
 {
+	if (self->client && self->client->sess.raceMode)
+		return qfalse;
+
 	if (BG_HasYsalamiri(g_gametype.integer, &self->client->ps))
 	{
 		return qfalse;
@@ -3075,9 +3113,21 @@ void ForceThrow( gentity_t *self, qboolean pull )
 				}
 				else 
 				{
-					G_ReflectMissile( self, push_list[x], forward );
+					//G_ReflectMissile( self, push_list[x], forward );
 					//deflect sound
 					//G_Sound( push_list[x], G_SoundIndex( va("sound/weapons/blaster/reflect%d.wav", Q_irand( 1, 3 ) ) ) );
+					
+					//Okay, dont do this is the owner of missile is in racemode. (rocketjump mode)
+					if (g_raceMode.integer) {
+						gentity_t *owner = &g_entities[push_list[x]->r.ownerNum];
+						if (owner->client && owner->client->sess.raceMode) {
+						}
+						else
+							G_ReflectMissile(self, push_list[x], forward);
+					}
+					else
+						G_ReflectMissile(self, push_list[x], forward);
+
 				}
 			}
 			else if ( !Q_stricmp( "func_door", push_list[x]->classname ) && (push_list[x]->spawnflags&2/*MOVER_FORCE_ACTIVATE*/) )
@@ -4764,11 +4814,19 @@ void WP_ForcePowersUpdate( gentity_t *self, usercmd_t *ucmd )
 	}
 	if ( /*!usingForce*/!self->client->ps.fd.forcePowersActive || self->client->ps.fd.forcePowersActive == (1 << FP_DRAIN) )
 	{//when not using the force, regenerate at 1 point per half second
+		int debounce = max(g_forceRegenTime.integer, 1);
+
 		if ( !self->client->ps.saberInFlight && self->client->ps.fd.forcePowerRegenDebounceTime < level.time )
 		{
 			if (g_gametype.integer != GT_HOLOCRON || g_MaxHolocronCarry.value)
 			{
-				if (self->client->ps.powerups[PW_FORCE_BOON])
+				//new
+				if (self->client->ps.stats[STAT_RACEMODE])
+				{
+					WP_ForcePowerRegenerate(self, 0);
+				}
+				//endnew
+				else if (self->client->ps.powerups[PW_FORCE_BOON])
 				{
 					WP_ForcePowerRegenerate( self, 6 );
 				}
@@ -4793,11 +4851,22 @@ void WP_ForcePowersUpdate( gentity_t *self, usercmd_t *ucmd )
 					}
 					holo++;
 				}
-
 				WP_ForcePowerRegenerate(self, holoregen);
 			}
+			//new
+			if (self->client->ps.stats[STAT_RACEMODE]) {
+				//debounce = 25;//Hardcoded regentime of 25ms for racers
+				while (self->client->ps.fd.forcePowerRegenDebounceTime < level.time) {
+					self->client->ps.fd.forcePowerRegenDebounceTime += 25;
+				}			
+			}
+			else {
+				self->client->ps.fd.forcePowerRegenDebounceTime = level.time + g_forceRegenTime.integer; //500?
+			}
+			//endnew
 
-			self->client->ps.fd.forcePowerRegenDebounceTime = level.time + g_forceRegenTime.integer; //500?
+
+			//self->client->ps.fd.forcePowerRegenDebounceTime = level.time + g_forceRegenTime.integer; //500?
 		}
 	}
 

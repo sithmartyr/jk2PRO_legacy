@@ -748,9 +748,9 @@ void CG_AddViewWeapon( playerState_t *ps ) {
 	{
 		cgFov = 1;
 	}
-	if (cgFov > 97)
+	if (cgFov > 180)
 	{
-		cgFov = 97;
+		cgFov = 180;
 	}
 
 	if ( ps->persistant[PERS_TEAM] == TEAM_SPECTATOR ) {
@@ -786,11 +786,11 @@ void CG_AddViewWeapon( playerState_t *ps ) {
 	}
 
 	// drop gun lower at higher fov
-	if ( cgFov > 90 ) {
+	/*if ( cgFov > 90 ) {
 		fovOffset = -0.2 * ( cgFov - 90 );
-	} else {
+	} else {*/
 		fovOffset = 0;
-	}
+	//}
 
 	cent = &cg.predictedPlayerEntity;	// &cg_entities[cg.snap->ps.clientNum];
 	CG_RegisterWeapon( ps->weapon );

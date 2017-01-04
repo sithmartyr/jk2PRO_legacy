@@ -1,0 +1,64 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2013
+VisualStudioVersion = 12.0.21005.1
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "JK2cgame", "cgame\JK2_cgame.vcxproj", "{86D98303-F9FC-4A06-AEDA-A5058527BFD3}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "JK2game", "game\JK2_game.vcxproj", "{FB8E215F-53EA-4193-8FBB-D2DB87BE5ED7}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "botlib", "botlib\botlib.vcxproj", "{868577DB-B985-4BB0-BD5B-BF01113C111D}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "jk2mp", "jk2mp.vcxproj", "{7CDEE802-5203-47A2-B6FC-21D8F180A081}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ui", "ui\ui.vcxproj", "{A98D72F2-7088-4A13-8F39-DD30590F0D55}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug JK2|Win32 = Debug JK2|Win32
+		Final JK2|Win32 = Final JK2|Win32
+		Release JK2|Win32 = Release JK2|Win32
+		Template|Win32 = Template|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{86D98303-F9FC-4A06-AEDA-A5058527BFD3}.Debug JK2|Win32.ActiveCfg = Debug JK2|Win32
+		{86D98303-F9FC-4A06-AEDA-A5058527BFD3}.Final JK2|Win32.ActiveCfg = Final JK2|Win32
+		{86D98303-F9FC-4A06-AEDA-A5058527BFD3}.Final JK2|Win32.Build.0 = Final JK2|Win32
+		{86D98303-F9FC-4A06-AEDA-A5058527BFD3}.Release JK2|Win32.ActiveCfg = Release JK2|Win32
+		{86D98303-F9FC-4A06-AEDA-A5058527BFD3}.Release JK2|Win32.Build.0 = Release JK2|Win32
+		{86D98303-F9FC-4A06-AEDA-A5058527BFD3}.Template|Win32.ActiveCfg = Final JK2|Win32
+		{86D98303-F9FC-4A06-AEDA-A5058527BFD3}.Template|Win32.Build.0 = Final JK2|Win32
+		{FB8E215F-53EA-4193-8FBB-D2DB87BE5ED7}.Debug JK2|Win32.ActiveCfg = Debug JK2|Win32
+		{FB8E215F-53EA-4193-8FBB-D2DB87BE5ED7}.Debug JK2|Win32.Build.0 = Debug JK2|Win32
+		{FB8E215F-53EA-4193-8FBB-D2DB87BE5ED7}.Final JK2|Win32.ActiveCfg = Final JK2|Win32
+		{FB8E215F-53EA-4193-8FBB-D2DB87BE5ED7}.Final JK2|Win32.Build.0 = Final JK2|Win32
+		{FB8E215F-53EA-4193-8FBB-D2DB87BE5ED7}.Release JK2|Win32.ActiveCfg = Release JK2|Win32
+		{FB8E215F-53EA-4193-8FBB-D2DB87BE5ED7}.Release JK2|Win32.Build.0 = Release JK2|Win32
+		{FB8E215F-53EA-4193-8FBB-D2DB87BE5ED7}.Template|Win32.ActiveCfg = Template|Win32
+		{FB8E215F-53EA-4193-8FBB-D2DB87BE5ED7}.Template|Win32.Build.0 = Template|Win32
+		{868577DB-B985-4BB0-BD5B-BF01113C111D}.Debug JK2|Win32.ActiveCfg = Debug JK2|Win32
+		{868577DB-B985-4BB0-BD5B-BF01113C111D}.Final JK2|Win32.ActiveCfg = Final JK2|Win32
+		{868577DB-B985-4BB0-BD5B-BF01113C111D}.Final JK2|Win32.Build.0 = Final JK2|Win32
+		{868577DB-B985-4BB0-BD5B-BF01113C111D}.Release JK2|Win32.ActiveCfg = Release JK2|Win32
+		{868577DB-B985-4BB0-BD5B-BF01113C111D}.Release JK2|Win32.Build.0 = Release JK2|Win32
+		{868577DB-B985-4BB0-BD5B-BF01113C111D}.Template|Win32.ActiveCfg = Template|Win32
+		{868577DB-B985-4BB0-BD5B-BF01113C111D}.Template|Win32.Build.0 = Template|Win32
+		{7CDEE802-5203-47A2-B6FC-21D8F180A081}.Debug JK2|Win32.ActiveCfg = Debug JK2|Win32
+		{7CDEE802-5203-47A2-B6FC-21D8F180A081}.Final JK2|Win32.ActiveCfg = Final JK2|Win32
+		{7CDEE802-5203-47A2-B6FC-21D8F180A081}.Final JK2|Win32.Build.0 = Final JK2|Win32
+		{7CDEE802-5203-47A2-B6FC-21D8F180A081}.Release JK2|Win32.ActiveCfg = Release JK2|Win32
+		{7CDEE802-5203-47A2-B6FC-21D8F180A081}.Release JK2|Win32.Build.0 = Release JK2|Win32
+		{7CDEE802-5203-47A2-B6FC-21D8F180A081}.Template|Win32.ActiveCfg = Template|Win32
+		{7CDEE802-5203-47A2-B6FC-21D8F180A081}.Template|Win32.Build.0 = Template|Win32
+		{A98D72F2-7088-4A13-8F39-DD30590F0D55}.Debug JK2|Win32.ActiveCfg = Debug JK2|Win32
+		{A98D72F2-7088-4A13-8F39-DD30590F0D55}.Final JK2|Win32.ActiveCfg = Final JK2|Win32
+		{A98D72F2-7088-4A13-8F39-DD30590F0D55}.Final JK2|Win32.Build.0 = Final JK2|Win32
+		{A98D72F2-7088-4A13-8F39-DD30590F0D55}.Release JK2|Win32.ActiveCfg = Release JK2|Win32
+		{A98D72F2-7088-4A13-8F39-DD30590F0D55}.Release JK2|Win32.Build.0 = Release JK2|Win32
+		{A98D72F2-7088-4A13-8F39-DD30590F0D55}.Template|Win32.ActiveCfg = Template|Win32
+		{A98D72F2-7088-4A13-8F39-DD30590F0D55}.Template|Win32.Build.0 = Template|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

@@ -18,6 +18,9 @@ typedef struct {
 gentity_t		g_entities[MAX_GENTITIES];
 gclient_t		g_clients[MAX_CLIENTS];
 
+//int dueltypes[MAX_CLIENTS];//jk2PRO - Serverside - Fullforce Duels
+//extern int dueltypes[MAX_CLIENTS];//jk2PRO - Serverside - Fullforce Duels
+
 qboolean gDuelExit = qfalse;
 
 vmCvar_t	g_gametype;
@@ -93,6 +96,44 @@ vmCvar_t	g_dismember;
 vmCvar_t	g_forceDodge;
 vmCvar_t	g_timeouttospec;
 
+//[videoP - jk2PRO - Serverside - All - Ignore - Start]
+//jk2PRO MOVEMENT
+vmCvar_t	g_movementStyle;
+
+//jk2PRO OTHER
+vmCvar_t	g_tweakVote;
+vmCvar_t	g_voteTimeout;
+vmCvar_t	g_voteDelay;
+vmCvar_t	g_allowBlackNames;
+vmCvar_t	g_allowSamePlayerNames;
+vmCvar_t	g_duelStartHealth;
+vmCvar_t	g_duelStartArmor;
+vmCvar_t	g_centerMOTD;
+vmCvar_t	g_centerMOTDTime;
+vmCvar_t	g_consoleMOTD;
+
+//jk2PRO ADMIN
+vmCvar_t	g_juniorAdminLevel;
+vmCvar_t	g_fullAdminLevel;
+vmCvar_t	g_juniorAdminPass;
+vmCvar_t	g_fullAdminPass;
+vmCvar_t	g_juniorAdminMsg;
+vmCvar_t	g_fullAdminMsg;
+vmCvar_t	g_allowNoFollow;
+
+//jk2PRO RACE / ACCOUNTS
+vmCvar_t	g_raceMode;
+vmCvar_t	g_allowRaceTele;
+vmCvar_t	g_forceLogin;
+
+//jk2PRO DUELING
+vmCvar_t	g_duelDistanceLimit;
+vmCvar_t	g_allowGunDuel;
+
+//jk2PRO CTF
+vmCvar_t	g_rabbit;
+//[videoP - jk2PRO - Serverside - All - Ignore - End]
+
 int gDuelist1 = -1;
 int gDuelist2 = -1;
 
@@ -118,59 +159,59 @@ static cvarTable_t		gameCvarTable[] = {
 	{ &g_ff_objectives, "g_ff_objectives", "0", /*CVAR_SERVERINFO |*/  CVAR_NORESTART, 0, qtrue },
 
 	{ &g_autoMapCycle, "g_autoMapCycle", "0", CVAR_ARCHIVE | CVAR_NORESTART, 0, qtrue },
-	{ &g_dmflags, "dmflags", "0", CVAR_SERVERINFO | CVAR_ARCHIVE, 0, qtrue  },
-	
-	{ &g_maxForceRank, "g_maxForceRank", "6", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_USERINFO | CVAR_LATCH, 0, qfalse  },
-	{ &g_forceBasedTeams, "g_forceBasedTeams", "0", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_USERINFO | CVAR_LATCH, 0, qfalse  },
-	{ &g_privateDuel, "g_privateDuel", "1", CVAR_SERVERINFO | CVAR_ARCHIVE, 0, qtrue  },
-	{ &g_saberLocking, "g_saberLocking", "1", CVAR_SERVERINFO | CVAR_ARCHIVE, 0, qtrue  },
-	{ &g_forceRegenTime, "g_forceRegenTime", "200", CVAR_SERVERINFO | CVAR_ARCHIVE, 0, qtrue  },
+	{ &g_dmflags, "dmflags", "0", CVAR_SERVERINFO | CVAR_ARCHIVE, 0, qtrue },
 
-	{ &g_spawnInvulnerability, "g_spawnInvulnerability", "3000", CVAR_ARCHIVE, 0, qtrue  },
+	{ &g_maxForceRank, "g_maxForceRank", "6", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_USERINFO | CVAR_LATCH, 0, qfalse },
+	{ &g_forceBasedTeams, "g_forceBasedTeams", "0", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_USERINFO | CVAR_LATCH, 0, qfalse },
+	{ &g_privateDuel, "g_privateDuel", "1", CVAR_SERVERINFO | CVAR_ARCHIVE, 0, qtrue },
+	{ &g_saberLocking, "g_saberLocking", "1", CVAR_SERVERINFO | CVAR_ARCHIVE, 0, qtrue },
+	{ &g_forceRegenTime, "g_forceRegenTime", "200", CVAR_SERVERINFO | CVAR_ARCHIVE, 0, qtrue },
 
-	{ &g_forcePowerDisable, "g_forcePowerDisable", "0", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_LATCH, 0, qtrue  },
-	{ &g_weaponDisable, "g_weaponDisable", "0", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_LATCH, 0, qtrue  },
-	{ &g_duelWeaponDisable, "g_duelWeaponDisable", "1", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_LATCH, 0, qtrue  },
+	{ &g_spawnInvulnerability, "g_spawnInvulnerability", "3000", CVAR_ARCHIVE, 0, qtrue },
+
+	{ &g_forcePowerDisable, "g_forcePowerDisable", "0", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_LATCH, 0, qtrue },
+	{ &g_weaponDisable, "g_weaponDisable", "0", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_LATCH, 0, qtrue },
+	{ &g_duelWeaponDisable, "g_duelWeaponDisable", "1", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_LATCH, 0, qtrue },
 
 	{ &g_fraglimit, "fraglimit", "20", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_NORESTART, 0, qtrue },
 	{ &g_duel_fraglimit, "duel_fraglimit", "10", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_NORESTART, 0, qtrue },
 	{ &g_timelimit, "timelimit", "0", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_NORESTART, 0, qtrue },
 	{ &g_capturelimit, "capturelimit", "8", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_NORESTART, 0, qtrue },
 
-	{ &g_synchronousClients, "g_synchronousClients", "0", CVAR_SYSTEMINFO, 0, qfalse  },
+	{ &g_synchronousClients, "g_synchronousClients", "0", CVAR_SYSTEMINFO, 0, qfalse },
 
 	{ &g_saberInterpolate, "g_saberInterpolate", "1", CVAR_ARCHIVE, 0, qtrue },
 
-	{ &g_friendlyFire, "g_friendlyFire", "0", CVAR_ARCHIVE, 0, qtrue  },
-	{ &g_friendlySaber, "g_friendlySaber", "0", CVAR_ARCHIVE, 0, qtrue  },
+	{ &g_friendlyFire, "g_friendlyFire", "0", CVAR_ARCHIVE, 0, qtrue },
+	{ &g_friendlySaber, "g_friendlySaber", "0", CVAR_ARCHIVE, 0, qtrue },
 
-	{ &g_teamAutoJoin, "g_teamAutoJoin", "0", CVAR_ARCHIVE  },
-	{ &g_teamForceBalance, "g_teamForceBalance", "0", CVAR_ARCHIVE  },
+	{ &g_teamAutoJoin, "g_teamAutoJoin", "0", CVAR_ARCHIVE },
+	{ &g_teamForceBalance, "g_teamForceBalance", "0", CVAR_ARCHIVE },
 
-	{ &g_warmup, "g_warmup", "20", CVAR_ARCHIVE, 0, qtrue  },
-	{ &g_doWarmup, "g_doWarmup", "0", 0, 0, qtrue  },
-	{ &g_log, "g_log", "games.log", CVAR_ARCHIVE, 0, qfalse  },
-	{ &g_logSync, "g_logSync", "0", CVAR_ARCHIVE, 0, qfalse  },
+	{ &g_warmup, "g_warmup", "20", CVAR_ARCHIVE, 0, qtrue },
+	{ &g_doWarmup, "g_doWarmup", "0", 0, 0, qtrue },
+	{ &g_log, "g_log", "games.log", CVAR_ARCHIVE, 0, qfalse },
+	{ &g_logSync, "g_logSync", "0", CVAR_ARCHIVE, 0, qfalse },
 
 	{ &g_statLog, "g_statLog", "0", CVAR_ARCHIVE, 0, qfalse },
 	{ &g_statLogFile, "g_statLogFile", "statlog.log", CVAR_ARCHIVE, 0, qfalse },
 
-	{ &g_password, "g_password", "", CVAR_USERINFO, 0, qfalse  },
+	{ &g_password, "g_password", "", CVAR_USERINFO, 0, qfalse },
 
-	{ &g_banIPs, "g_banIPs", "", CVAR_ARCHIVE, 0, qfalse  },
-	{ &g_filterBan, "g_filterBan", "1", CVAR_ARCHIVE, 0, qfalse  },
+	{ &g_banIPs, "g_banIPs", "", CVAR_ARCHIVE, 0, qfalse },
+	{ &g_filterBan, "g_filterBan", "1", CVAR_ARCHIVE, 0, qfalse },
 
 	{ &g_needpass, "g_needpass", "0", CVAR_SERVERINFO | CVAR_ROM, 0, qfalse },
 
-	{ &g_dedicated, "dedicated", "0", 0, 0, qfalse  },
+	{ &g_dedicated, "dedicated", "0", 0, 0, qfalse },
 
-	{ &g_speed, "g_speed", "250", 0, 0, qtrue  },
-	{ &g_gravity, "g_gravity", "800", 0, 0, qtrue  },
-	{ &g_knockback, "g_knockback", "1000", 0, 0, qtrue  },
-	{ &g_quadfactor, "g_quadfactor", "3", 0, 0, qtrue  },
-	{ &g_weaponRespawn, "g_weaponrespawn", "5", 0, 0, qtrue  },
+	{ &g_speed, "g_speed", "250", 0, 0, qtrue },
+	{ &g_gravity, "g_gravity", "800", 0, 0, qtrue },
+	{ &g_knockback, "g_knockback", "1000", 0, 0, qtrue },
+	{ &g_quadfactor, "g_quadfactor", "3", 0, 0, qtrue },
+	{ &g_weaponRespawn, "g_weaponrespawn", "5", 0, 0, qtrue },
 	{ &g_weaponTeamRespawn, "g_weaponTeamRespawn", "5", 0, 0, qtrue },
-	{ &g_adaptRespawn, "g_adaptrespawn", "1", 0, 0, qtrue  },		// Make weapons respawn faster with a lot of players.
+	{ &g_adaptRespawn, "g_adaptrespawn", "1", 0, 0, qtrue },		// Make weapons respawn faster with a lot of players.
 	{ &g_forcerespawn, "g_forcerespawn", "60", 0, 0, qtrue },		// One minute force respawn.  Give a player enough time to reallocate force.
 	{ &g_inactivity, "g_inactivity", "0", 0, 0, qtrue },
 	{ &g_debugMove, "g_debugMove", "0", 0, 0, qfalse },
@@ -191,22 +232,62 @@ static cvarTable_t		gameCvarTable[] = {
 	{ &g_debugUp, "g_debugUp", "0", 0, 0, qfalse },
 #endif
 
-	{ &g_redteam, "g_redteam", "Empire", CVAR_ARCHIVE | CVAR_SERVERINFO | CVAR_USERINFO , 0, qtrue, qtrue },
-	{ &g_blueteam, "g_blueteam", "Rebellion", CVAR_ARCHIVE | CVAR_SERVERINFO | CVAR_USERINFO , 0, qtrue, qtrue  },
-	{ &g_singlePlayer, "ui_singlePlayerActive", "", 0, 0, qfalse, qfalse  },
+	{ &g_redteam, "g_redteam", "Empire", CVAR_ARCHIVE | CVAR_SERVERINFO | CVAR_USERINFO, 0, qtrue, qtrue },
+	{ &g_blueteam, "g_blueteam", "Rebellion", CVAR_ARCHIVE | CVAR_SERVERINFO | CVAR_USERINFO, 0, qtrue, qtrue },
+	{ &g_singlePlayer, "ui_singlePlayerActive", "", 0, 0, qfalse, qfalse },
 
 	{ &g_enableDust, "g_enableDust", "0", 0, 0, qtrue, qfalse },
 	{ &g_enableBreath, "g_enableBreath", "0", 0, 0, qtrue, qfalse },
-	{ &g_smoothClients, "g_smoothClients", "1", 0, 0, qfalse},
-	{ &pmove_fixed, "pmove_fixed", "0", CVAR_SYSTEMINFO, 0, qfalse},
-	{ &pmove_msec, "pmove_msec", "8", CVAR_SYSTEMINFO, 0, qfalse},
+	{ &g_smoothClients, "g_smoothClients", "1", 0, 0, qfalse },
+	{ &pmove_fixed, "pmove_fixed", "0", CVAR_SYSTEMINFO, 0, qfalse },
+	{ &pmove_msec, "pmove_msec", "8", CVAR_SYSTEMINFO, 0, qfalse },
 
-	{ &g_rankings, "g_rankings", "0", 0, 0, qfalse},
+	{ &g_rankings, "g_rankings", "0", 0, 0, qfalse },
 
-	{ &g_dismember, "g_dismember", "0", 0, 0, qtrue  },
-	{ &g_forceDodge, "g_forceDodge", "1", 0, 0, qtrue  },
+	{ &g_dismember, "g_dismember", "0", 0, 0, qtrue },
+	{ &g_forceDodge, "g_forceDodge", "1", 0, 0, qtrue },
 
 	{ &g_timeouttospec, "g_timeouttospec", "70", CVAR_ARCHIVE, 0, qfalse },
+
+	//[videoP - jk2PRO - Serverside - All - CVARS - Start]
+
+	//jk2PRO MOVEMENT
+	{ &g_movementStyle, "g_movementStyle", "1", CVAR_ARCHIVE, 0, qtrue },
+
+	//jk2PRO OTHER
+	{ &g_tweakVote, "g_tweakVote", "0", CVAR_ARCHIVE|CVAR_LATCH, qtrue },
+	{ &g_voteTimeout, "g_voteTimeout", "180", CVAR_ARCHIVE, qfalse },
+	{ &g_voteDelay, "g_voteDelay", "3000", 0, qtrue },
+	{ &g_allowBlackNames, "g_allowBlackNames", "0", CVAR_ARCHIVE, 0, qtrue },
+	{ &g_allowSamePlayerNames, "g_allowSamePlayerNames", "0", CVAR_ARCHIVE, 0, qfalse },
+	{ &g_duelStartHealth, "g_duelStartHealth", "100", CVAR_ARCHIVE, 0, qtrue },
+	{ &g_duelStartArmor, "g_duelStartArmor", "100", CVAR_ARCHIVE, 0, qtrue },
+	{ &g_centerMOTD, "g_centerMOTD", "", CVAR_ARCHIVE, 0, qfalse },
+	{ &g_centerMOTDTime, "g_centerMOTDTime", "5", CVAR_ARCHIVE, 0, qfalse },
+	{ &g_consoleMOTD, "g_consoleMOTD", "", CVAR_ARCHIVE, 0, qfalse },
+
+
+	//jk2PRO ADMIN
+	{ &g_juniorAdminLevel, "g_juniorAdminLevel", "0", CVAR_ARCHIVE, 0, qfalse },
+	{ &g_fullAdminLevel, "g_fullAdminLevel", "0", CVAR_ARCHIVE, 0, qfalse },
+	{ &g_juniorAdminPass, "g_juniorAdminPass", "", CVAR_ARCHIVE, 0, qfalse },
+	{ &g_fullAdminPass, "g_fullAdminPass", "", CVAR_ARCHIVE, 0, qfalse },
+	{ &g_juniorAdminMsg, "g_juniorAdminMsg", "", CVAR_ARCHIVE, 0, qfalse },
+	{ &g_fullAdminMsg, "g_fullAdminMsg", "", CVAR_ARCHIVE, 0, qfalse },
+	{ &g_allowNoFollow, "g_allowNoFollow", "0", CVAR_ARCHIVE, 0, qtrue },
+
+	//jk2PRO RACE / ACCOUNTS
+	{ &g_raceMode, "g_raceMode", "0", CVAR_ARCHIVE, 0, qtrue },
+	{ &g_allowRaceTele, "g_allowRaceTele", "0", CVAR_ARCHIVE, 0, qtrue },
+	{ &g_forceLogin, "g_forceLogin", "0", CVAR_ARCHIVE, 0, qfalse },
+
+	//jk2PRO DUELING
+	{ &g_duelDistanceLimit, "g_duelDistanceLimit", "0", CVAR_ARCHIVE, 0, qtrue },
+	{ &g_allowGunDuel, "g_allowGunDuel", "1", CVAR_ARCHIVE, 0, qtrue },
+
+	//jk2PRO CTF
+	{ &g_rabbit, "g_rabbit", "0", CVAR_ARCHIVE, 0, qtrue }
+	//[videoP - jk2PRO - Serverside - All - CVARS - End]
 };
 
 // bk001129 - made static to avoid aliasing
@@ -1236,6 +1317,78 @@ void QDECL G_LogPrintf( const char *fmt, ... ) {
 }
 
 /*
+=================
+G_SecurityLogPrintf
+
+Print to the security logfile with a time stamp if it is open
+=================
+*/
+void QDECL G_SecurityLogPrintf(const char *fmt, ...) {
+	/*//va_list		argptr;
+	//char		string[1024] = { 0 };
+	//time_t		rawtime;
+	//int			timeLen = 0;
+
+	//time(&rawtime);
+	//localtime(&rawtime);
+	//strftime(string, sizeof(string), "[%Y-%m-%d] [%H:%M:%S] ", gmtime(&rawtime));
+	//timeLen = strlen(string);
+
+	//va_start(argptr, fmt);
+	//Q_vsnprintf(string + timeLen, sizeof(string)-timeLen, fmt, argptr);
+	//va_end(argptr);
+
+	if (g_dedicated.integer)
+		//trap_Print("%s", string + timeLen);
+		Com_Printf("%s", fmt);
+
+	if (!level.security.log)
+		return;
+
+	//trap_FS_Write(string, strlen(string), level.security.log);
+	trap_FS_Write(fmt, strlen(fmt), level.security.log);*/
+
+
+
+
+
+
+
+
+	va_list		argptr;
+	char		string[1024];
+	int			min, tens, sec;
+
+	sec = level.time / 1000;
+
+	min = sec / 60;
+	sec -= min * 60;
+	tens = sec / 10;
+	sec -= tens * 10;
+
+	Com_sprintf(string, sizeof(string), "%3i:%i%i ", min, tens, sec);
+
+	va_start(argptr, fmt);
+	vsprintf(string + 7, fmt, argptr);
+	va_end(argptr);
+
+	if (g_dedicated.integer) {
+		G_Printf("%s", string + 7);
+	}
+
+	if (!level.security.log) {
+		return;
+	}
+
+	trap_FS_Write(string, strlen(string), level.security.log);
+
+
+
+
+
+}
+
+/*
 ================
 LogExit
 
@@ -2121,3 +2274,145 @@ const char *G_GetStripEdString(char *refSection, char *refName)
 	return text;
 }
 
+const char *G_GetStringEdString(char *refSection, char *refName)
+{
+	/*
+	static char text[1024]={0};
+	trap->SP_GetStringTextString(va("%s_%s", refSection, refName), text, sizeof(text));
+	return text;
+	*/
+
+	//Well, it would've been lovely doing it the above way, but it would mean mixing
+	//languages for the client depending on what the server is. So we'll mark this as
+	//a stringed reference with @@@ and send the refname to the client, and when it goes
+	//to print it will get scanned for the stringed reference indication and dealt with
+	//properly.
+	static char text[1024] = { 0 };
+	Com_sprintf(text, sizeof(text), "@@@%s", refName);
+	return text;
+}
+
+/*
+==============================
+saved - used to hold ownerNums
+==============================
+*/
+static int saved[MAX_GENTITIES];
+
+
+
+/*
+============================================
+BeginHack
+This abuses ownerNum to allow nonsolid duels
+(used by trace functions)
+============================================
+*/
+static /*QINLINE*/ void BeginHack(int entityNum)
+{
+	// since we are in a duel, make everyone else nonsolid
+	if (0 <= entityNum && entityNum < MAX_CLIENTS && level.clients[entityNum].ps.duelInProgress) {
+		int i;
+		for (i = 0; i < level.num_entities; i++) { //This is numentities not max_clients because of NPCS
+			if (i != entityNum && i != level.clients[entityNum].ps.duelIndex) {
+				if (g_entities[i].inuse &&
+					((g_entities[i].s.eType == ET_PLAYER) ||
+					((dueltypes[level.clients[entityNum].ps.clientNum] <= 1) && g_entities[i].s.eType == ET_GENERAL && (!Q_stricmp(g_entities[i].classname, "laserTrap"))))) {
+					saved[i] = g_entities[i].r.ownerNum;
+					g_entities[i].r.ownerNum = entityNum;
+				}
+			}
+		}
+	}
+	else if (g_entities[entityNum].client && g_entities[entityNum].client->sess.raceMode) { //Have to check all entities because swoops can be racemode too :/
+		int i;
+		for (i = 0; i < level.num_entities; i++) { ////This is numentities not max_clients because of NPCS
+			if (i != entityNum) {
+				if (g_entities[i].inuse &&
+					((g_entities[i].s.eType == ET_PLAYER) ||
+					(g_entities[i].s.eType == ET_MOVER && ((!Q_stricmp(g_entities[i].classname, "func_door") || !Q_stricmp(g_entities[i].classname, "func_plat")))) ||
+					(g_entities[i].s.eType == ET_GENERAL && (!Q_stricmp(g_entities[i].classname, "laserTrap")))))
+				{
+					saved[i] = g_entities[i].r.ownerNum;
+					g_entities[i].r.ownerNum = entityNum;
+				}
+			}
+		}
+	}
+	else { // we are not dueling but make those that are nonsolid
+		int i;
+		if (g_entities[entityNum].inuse) {//Saber
+			const int saberOwner = g_entities[entityNum].r.ownerNum;//Saberowner
+			if (g_entities[saberOwner].client && g_entities[saberOwner].client->ps.duelInProgress) {
+				return;
+			}
+		}
+		for (i = 0; i < level.num_entities; i++) { //loda fixme? This should go through all entities... to also account for people lightsabers..? or is that too costly
+			if (i != entityNum) {
+				if (g_entities[i].inuse && g_entities[i].client &&
+					(g_entities[i].client->ps.duelInProgress || g_entities[i].client->sess.raceMode)) { //loda fixme? Or the ent is a saber, and its owner is in racemode or duel in progress
+					saved[i] = g_entities[i].r.ownerNum;
+					g_entities[i].r.ownerNum = entityNum;
+				}
+			}
+		}
+	}
+}
+
+/*
+==========================================
+EndHack
+This cleans up the damage BeginHack caused
+==========================================
+*/
+static /*QINLINE*/ void EndHack(int entityNum) { //Should be inline?
+	if (0 <= entityNum && entityNum < MAX_CLIENTS && level.clients[entityNum].ps.duelInProgress) {
+		int i;
+		for (i = 0; i < level.num_entities; i++) {
+			if (i != entityNum && i != level.clients[entityNum].ps.duelIndex) {
+				if (g_entities[i].inuse &&
+					((g_entities[i].s.eType == ET_PLAYER) ||
+					((dueltypes[level.clients[entityNum].ps.clientNum] <= 1) && g_entities[i].s.eType == ET_GENERAL && (!Q_stricmp(g_entities[i].classname, "laserTrap"))))) {
+					g_entities[i].r.ownerNum = saved[i];
+				}
+			}
+		}
+	}
+	else if (g_entities[entityNum].client && g_entities[entityNum].client->sess.raceMode) {
+		int i;
+		for (i = 0; i < level.num_entities; i++) {
+			if (i != entityNum) {
+				if (g_entities[i].inuse &&
+					((g_entities[i].s.eType == ET_PLAYER) ||
+					(g_entities[i].s.eType == ET_MOVER && ((!Q_stricmp(g_entities[i].classname, "func_door") || !Q_stricmp(g_entities[i].classname, "func_plat")))) ||
+					(g_entities[i].s.eType == ET_GENERAL && (!Q_stricmp(g_entities[i].classname, "laserTrap")))))
+				{
+					g_entities[i].r.ownerNum = saved[i];
+				}
+			}
+		}
+	}
+	else {
+		int i;
+		if (g_entities[entityNum].inuse) {//Saber
+			const int saberOwner = g_entities[entityNum].r.ownerNum;//Saberowner
+			if (g_entities[saberOwner].client && g_entities[saberOwner].client->ps.duelInProgress) {
+				return;
+			}
+		}
+		for (i = 0; i < level.num_entities; i++) {
+			if (i != entityNum) {
+				if (g_entities[i].inuse && g_entities[i].client &&
+					(g_entities[i].client->ps.duelInProgress || g_entities[i].client->sess.raceMode)) {
+					g_entities[i].r.ownerNum = saved[i];
+				}
+			}
+		}
+	}
+}
+
+void JP_Trace(trace_t *results, const vec3_t start, const vec3_t mins, const vec3_t maxs, const vec3_t end, int passEntityNum, int contentmask, int capsule, int traceFlags, int useLod) {
+	BeginHack(passEntityNum);
+	trap_Trace(results, start, mins, maxs, end, passEntityNum, contentmask);
+	EndHack(passEntityNum);
+}

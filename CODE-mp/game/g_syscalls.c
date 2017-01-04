@@ -88,6 +88,9 @@ void trap_DropClient( int clientNum, const char *reason ) {
 }
 
 void trap_SendServerCommand( int clientNum, const char *text ) {
+	if (strlen(text) > 1022) {
+		return;
+	}
 	syscall( G_SEND_SERVER_COMMAND, clientNum, text );
 }
 
@@ -904,6 +907,12 @@ void trap_G2API_CleanGhoul2Models(void **ghoul2Ptr)
 {
 	syscall(G_G2_CLEANMODELS, ghoul2Ptr);
 }
+
+//jk2PRO
+/*void trap_FS_Open(const char *qpath, fileHandle_t *f, fsMode_t mode)
+{
+	syscall(G_FS_FOPEN_FILE, qpath, f, mode);
+}*/
 
 /*
 Ghoul2 Insert End

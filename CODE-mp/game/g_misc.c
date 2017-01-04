@@ -61,6 +61,7 @@ TELEPORTERS
 
 =================================================================================
 */
+void DeletePlayerProjectiles(gentity_t *ent);
 
 void TeleportPlayer( gentity_t *player, vec3_t origin, vec3_t angles ) {
 	gentity_t	*tent;
@@ -107,8 +108,101 @@ void TeleportPlayer( gentity_t *player, vec3_t origin, vec3_t angles ) {
 	if ( player->client->sess.sessionTeam != TEAM_SPECTATOR ) {
 		trap_LinkEntity (player);
 	}
+
+	if (player->client->sess.raceMode) {
+		//player->client->ps.powerups[PW_YSALAMIRI] = 0; //Fuck
+		if (player->client->sess.movementStyle == 7 || player->client->sess.movementStyle == 8) //Get rid of their rockets when they tele/noclip..?
+			DeletePlayerProjectiles(player);
+	}
 }
 
+//videoP - jk2PRO - Serverside - New teleport Function - Start
+void AmTeleportPlayer(gentity_t *player, vec3_t origin, vec3_t angles, qboolean droptofloor, qboolean race) {
+	gentity_t	*tent;
+	qboolean	wasNoClip = qfalse;
+	vec3_t	neworigin;
+
+	if (!player || !player->client)
+		return;
+	if (BG_InRoll(&player->client->ps, player->s.legsAnim))
+		return;
+
+/* Grapple later :)
+#if _GRAPPLE
+	if (player->client && player->client->hook)
+		Weapon_HookFree(player->client->hook);
+#endif
+*/
+
+	neworigin[0] = origin[0];
+	neworigin[1] = origin[1];
+	neworigin[2] = origin[2];
+
+	if (player->client->noclip)
+		wasNoClip = qtrue;
+
+	player->client->noclip = qtrue;
+	//DM - addlater ResetPlayerTimers(player, qtrue);
+	player->client->ps.fd.forceJumpZStart = -65536;
+	/* No jetpack in JK2......yet?.....
+	if (player->client->sess.raceMode && player->client->sess.movementStyle == MV_JETPACK) {
+		player->client->ps.jetpackFuel = 100;
+		Jetpack_Off(player);
+	}*/
+	
+	if (droptofloor) {
+		trace_t tr;
+		vec3_t down, mins, maxs;
+		VectorSet(mins, -15, -15, DEFAULT_MINS_2);
+		VectorSet(maxs, 15, 15, DEFAULT_MAXS_2);
+		VectorCopy(origin, down);
+
+		down[2] -= 32768;
+		JP_Trace(&tr, origin, mins, maxs, down, player->client->ps.clientNum, MASK_PLAYERSOLID, qfalse, 0, 0);
+		neworigin[2] = (int)tr.endpos[2]; //type casting is dumb
+	}
+	
+	// use temp events at source and destination to prevent the effect
+	// from getting dropped by a second player event
+	if (player->client->sess.sessionTeam != TEAM_SPECTATOR && !race) {
+		tent = G_TempEntity(player->client->ps.origin, EV_PLAYER_TELEPORT_OUT);
+		tent->s.clientNum = player->s.clientNum;
+
+		tent = G_TempEntity(neworigin, EV_PLAYER_TELEPORT_IN);
+		tent->s.clientNum = player->s.clientNum;
+	}
+
+	// unlink to make sure it can't possibly interfere with G_KillBox
+	//trap_UnlinkEntity((sharedEntity_t *)player);
+	trap_UnlinkEntity(player);
+	VectorCopy(neworigin, player->client->ps.origin);
+	player->client->ps.origin[2] += 8;//Get rid of weird jitteryness after teleporting on ground
+	VectorClear(player->client->ps.velocity);
+
+	player->client->ps.eFlags ^= EF_TELEPORT_BIT;
+	//G_ResetTrail(player);//unlagged
+
+	// kill anything at the destination
+	if (player->client->sess.sessionTeam != TEAM_SPECTATOR) {
+		G_KillBox(player);
+	}
+	// set angles
+	SetClientViewAngle(player, angles);
+
+	// save results of pmove
+	BG_PlayerStateToEntityState(&player->client->ps, &player->s, qtrue);
+
+	// use the precise origin for linking
+	VectorCopy(player->client->ps.origin, player->r.currentOrigin);
+
+	if (player->client->sess.sessionTeam != TEAM_SPECTATOR) {
+		//trap_LinkEntity((sharedEntity_t *)player);
+		trap_LinkEntity(player);
+	}
+	if (!wasNoClip)
+		player->client->noclip = qfalse;
+}
+//videoP - jk2PRO - Serverside - New teleport Function - End
 
 /*QUAKED misc_teleporter_dest (1 0 0) (-32 -32 -24) (32 32 -16)
 Point teleporters at these.

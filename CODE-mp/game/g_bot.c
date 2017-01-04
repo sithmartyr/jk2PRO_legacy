@@ -10,7 +10,7 @@ static char		*g_botInfos[MAX_BOTS];
 
 
 int				g_numArenas;
-static char		*g_arenaInfos[MAX_ARENAS];
+/*static*/ char		*g_arenaInfos[MAX_ARENAS];
 
 
 #define BOT_BEGIN_DELAY_BASE		2000
@@ -123,6 +123,7 @@ static void G_LoadArenasFromFile( char *filename ) {
 	trap_FS_FCloseFile( f );
 
 	g_numArenas += G_ParseInfos( buf, MAX_ARENAS - g_numArenas, &g_arenaInfos[g_numArenas] );
+	//level.arenas.num += G_ParseInfos(buf, MAX_ARENAS - level.arenas.num, &level.arenas.infos[level.arenas.num]);
 }
 
 int G_GetMapTypeBits(char *type)
@@ -176,9 +177,9 @@ qboolean G_DoesMapSupportGametype(const char *mapname, int gametype)
 		return qfalse;
 	}
 
-	for( n = 0; n < g_numArenas; n++ )
+	for (n = 0; n < g_numArenas; n++ )
 	{
-		type = Info_ValueForKey( g_arenaInfos[n], "map" );
+		type = Info_ValueForKey(g_arenaInfos[n], "map");
 
 		if (Q_stricmp(mapname, type) == 0)
 		{
@@ -199,7 +200,6 @@ qboolean G_DoesMapSupportGametype(const char *mapname, int gametype)
 	{ //the map in question supports the gametype in question, so..
 		return qtrue;
 	}
-
 	return qfalse;
 }
 
@@ -275,7 +275,7 @@ const char *G_RefreshNextMap(int gametype, qboolean forced)
 		trap_Cvar_Set( "nextmap", va("map %s", type));
 	}
 
-	return Info_ValueForKey( g_arenaInfos[desiredMap], "map" );
+	return Info_ValueForKey(g_arenaInfos[desiredMap], "map");
 }
 
 /*

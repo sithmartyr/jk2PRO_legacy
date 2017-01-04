@@ -549,7 +549,7 @@ void AddScore( gentity_t *ent, vec3_t origin, int score ) {
 	//ScorePlum(ent, origin, score);
 	//
 	ent->client->ps.persistant[PERS_SCORE] += score;
-	if ( g_gametype.integer == GT_TEAM )
+	if (g_gametype.integer == GT_TEAM)
 		level.teamScores[ ent->client->ps.persistant[PERS_TEAM] ] += score;
 	CalculateRanks();
 }
@@ -568,6 +568,12 @@ void TossClientWeapon(gentity_t *self, vec3_t direction, float speed)
 	gentity_t *launched;
 	int weapon = self->s.weapon;
 	int ammoSub;
+
+	if (self->client->ps.duelInProgress)//gun duel
+		return;
+
+	if (self->client->sess.raceMode)//racemode
+		return;
 
 	if (weapon <= WP_BRYAR_PISTOL)
 	{ //can't have this
@@ -641,6 +647,12 @@ void TossClientItems( gentity_t *self ) {
 	int			i;
 	gentity_t	*drop;
 
+	if (self->client->ps.duelInProgress)//gun duel
+		return;
+
+	if (self->client->sess.raceMode)//racemode
+		return;
+
 	// drop the weapon if not a gauntlet or machinegun
 	weapon = self->s.weapon;
 
@@ -678,7 +690,7 @@ void TossClientItems( gentity_t *self ) {
 	}
 
 	// drop all the powerups if not in teamplay
-	if ( g_gametype.integer != GT_TEAM ) {
+	if (g_gametype.integer != GT_TEAM) {
 		angle = 45;
 		for ( i = 1 ; i < PW_NUM_POWERUPS ; i++ ) {
 			if ( self->client->ps.powerups[ i ] > level.time ) {
@@ -2182,6 +2194,9 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 	float		hamt = 0;
 	float		shieldAbsorbed = 0;
 
+	if (!targ)
+		return;
+
 	if (targ && targ->damageRedirect)
 	{
 		G_Damage(&g_entities[targ->damageRedirectTo], inflictor, attacker, dir, point, damage, dflags, mod);
@@ -2192,7 +2207,22 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 		return;
 	}
 
-	if (targ && targ->client && targ->client->ps.duelInProgress)
+	if (attacker && attacker->client && attacker->client->noclip)//jk2pro fix noclip abuse
+		return;
+
+	if ((g_gametype.integer == GT_FFA) && !g_friendlyFire.integer && g_rabbit.integer) {
+		if (attacker && attacker->client && !attacker->client->ps.duelInProgress && !attacker->client->ps.powerups[PW_NEUTRALFLAG] && targ && targ->client && !targ->client->ps.duelInProgress && !targ->client->sess.raceMode && !targ->client->ps.powerups[PW_NEUTRALFLAG])
+			return;
+	}
+
+	if (attacker && attacker->client && attacker->client->sess.raceMode && !((attacker->client->ps.stats[STAT_MOVEMENTSTYLE] == 7) || (attacker->client->ps.stats[STAT_MOVEMENTSTYLE] == 8)))
+		return;
+	if (attacker && attacker->client && attacker->client->sess.raceMode && ((attacker->client->ps.stats[STAT_MOVEMENTSTYLE] == 7) || (attacker->client->ps.stats[STAT_MOVEMENTSTYLE] == 8)) && targ->client && (targ != attacker))
+		return;
+	if (targ && targ->client && targ->client->sess.raceMode && attacker != targ && mod != MOD_TRIGGER_HURT /*&& mod != MOD_CRUSH*/ && mod != MOD_LAVA && (damage != Q3_INFINITE)) //Fixme, change this to get rid of dmg from doors/eles.. but only if they get made completely nonsolid first
+		return;
+
+	/*if (targ && targ->client && targ->client->ps.duelInProgress)
 	{
 		if (attacker && attacker->client && attacker->s.number != targ->client->ps.duelIndex)
 		{
@@ -2213,7 +2243,34 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 		{
 			return;
 		}
+	}*/
+
+	//JK2PRO - Fix dueling so falling to death dosnt loop - Start
+	if (mod != MOD_FALLING) {
+		if (targ && targ->client && targ->client->ps.duelInProgress)//Target is dueling
+		{
+			if (attacker && attacker->client) {//always kill him if he dies by falling
+				if (attacker->s.number != targ->client->ps.duelIndex)//Dont dmg him if its not his duelpartner doing the dmg
+					return;
+				if (mod != MOD_SABER && dueltypes[attacker->client->ps.clientNum] == 0)//Only allow saber only dmg in saber duels, this is just a doublecheck?
+					return;
+				if ((mod == MOD_TRIP_MINE_SPLASH || mod == MOD_DET_PACK_SPLASH) && dueltypes[attacker->client->ps.clientNum] == 1) //Tripmine or detpack in FF duel.. sad hack!
+					return; //Ideal solution would be to either blow up a players mines when they enter a duel, or do a more extensive check here..
+			}
+		}
+		if (attacker && attacker->client && attacker->client->ps.duelInProgress)//Attacker is dueling
+		{
+			if (targ && targ->client) {//always kill him if he dies by falling
+				if (targ->s.number != attacker->client->ps.duelIndex)//Dont dmg him if its not his duelpartner doing the dmg
+					return;
+				if (mod != MOD_SABER && dueltypes[targ->client->ps.clientNum] == 0)//Only allow saber only dmg in saber duels, this is just a doublecheck?
+					return;
+				if ((mod == MOD_TRIP_MINE_SPLASH || mod == MOD_DET_PACK_SPLASH) && dueltypes[attacker->client->ps.clientNum] == 1) //Tripmine or detpack in FF duel.. sad hack!
+					return;
+			}
+		}
 	}
+	//JK2PRO - Fix dueling so falling to death dosnt loop - End
 
 	if (targ && targ->client && (targ->client->ps.fd.forcePowersActive & (1 << FP_RAGE)))
 	{
@@ -2466,7 +2523,7 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 	}
 
 	// See if it's the player hurting the emeny flag carrier
-	if( g_gametype.integer == GT_CTF || g_gametype.integer == GT_CTY) {
+	if (g_gametype.integer == GT_CTF || g_gametype.integer == GT_CTY) {
 		Team_CheckHurtCarrier(targ, attacker);
 	}
 
@@ -2654,7 +2711,7 @@ qboolean CanDamage (gentity_t *targ, vec3_t origin) {
 	VectorScale (midpoint, 0.5, midpoint);
 
 	VectorCopy (midpoint, dest);
-	trap_Trace ( &tr, origin, vec3_origin, vec3_origin, dest, ENTITYNUM_NONE, MASK_SOLID);
+	JP_Trace ( &tr, origin, vec3_origin, vec3_origin, dest, ENTITYNUM_NONE, MASK_SOLID, qfalse, 0, 0);
 	if (tr.fraction == 1.0 || tr.entityNum == targ->s.number)
 		return qtrue;
 
@@ -2663,28 +2720,28 @@ qboolean CanDamage (gentity_t *targ, vec3_t origin) {
 	VectorCopy (midpoint, dest);
 	dest[0] += 15.0;
 	dest[1] += 15.0;
-	trap_Trace ( &tr, origin, vec3_origin, vec3_origin, dest, ENTITYNUM_NONE, MASK_SOLID);
+	JP_Trace ( &tr, origin, vec3_origin, vec3_origin, dest, ENTITYNUM_NONE, MASK_SOLID, qfalse, 0, 0);
 	if (tr.fraction == 1.0)
 		return qtrue;
 
 	VectorCopy (midpoint, dest);
 	dest[0] += 15.0;
 	dest[1] -= 15.0;
-	trap_Trace ( &tr, origin, vec3_origin, vec3_origin, dest, ENTITYNUM_NONE, MASK_SOLID);
+	JP_Trace ( &tr, origin, vec3_origin, vec3_origin, dest, ENTITYNUM_NONE, MASK_SOLID, qfalse, 0, 0);
 	if (tr.fraction == 1.0)
 		return qtrue;
 
 	VectorCopy (midpoint, dest);
 	dest[0] -= 15.0;
 	dest[1] += 15.0;
-	trap_Trace ( &tr, origin, vec3_origin, vec3_origin, dest, ENTITYNUM_NONE, MASK_SOLID);
+	JP_Trace ( &tr, origin, vec3_origin, vec3_origin, dest, ENTITYNUM_NONE, MASK_SOLID, qfalse, 0, 0);
 	if (tr.fraction == 1.0)
 		return qtrue;
 
 	VectorCopy (midpoint, dest);
 	dest[0] -= 15.0;
 	dest[1] -= 15.0;
-	trap_Trace ( &tr, origin, vec3_origin, vec3_origin, dest, ENTITYNUM_NONE, MASK_SOLID);
+	JP_Trace ( &tr, origin, vec3_origin, vec3_origin, dest, ENTITYNUM_NONE, MASK_SOLID, qfalse, 0, 0);
 	if (tr.fraction == 1.0)
 		return qtrue;
 

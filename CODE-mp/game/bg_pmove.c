@@ -6,6 +6,9 @@
 #include "q_shared.h"
 #include "bg_public.h"
 #include "bg_local.h"
+#include "g_local.h"
+
+
 
 #define MAX_WEAPON_CHARGE_TIME 5000
 
@@ -143,6 +146,39 @@ float forceJumpStrength[NUM_FORCE_POWER_LEVELS] =
 	590,
 	840
 };
+
+int PM_GetMovePhysics(void)
+{
+	if (!pm || !pm->ps)
+	return 1;
+#ifdef QAGAME
+	if (pm->ps->stats[STAT_RACEMODE])
+	{
+		return (pm->ps->stats[STAT_MOVEMENTSTYLE]);
+	}
+	else if (g_movementStyle.integer >= 0 && g_movementStyle.integer <= 6)
+		return (g_movementStyle.integer);
+	else if (g_movementStyle.integer < 0)
+		return 0;
+	else if (g_movementStyle.integer > 8)
+		return 8;
+#else
+	//if (!cgs.isJAPro)
+		//return 1;
+	return pm->ps->stats[STAT_MOVEMENTSTYLE];
+	/*
+	else if (pm->ps->stats[STAT_RACEMODE])
+	return (pm->ps->stats[STAT_MOVEMENTSTYLE]);
+	else if (cgs.jcinfo & JAPRO_CINFO_CPM)
+	return 3;
+	else if (cgs.jcinfo & JAPRO_CINFO_HL2)
+	return 2;
+	else if (cgs.jcinfo & JAPRO_CINFO_NOSTRAFE)
+	return 0;
+	*/
+#endif
+	return 1;
+}
 
 int PM_GetSaberStance(void)
 {
@@ -309,6 +345,32 @@ static void PM_Friction( void ) {
 	vel[2] = vel[2] * newspeed;
 }
 
+void PM_AirAccelerate(vec3_t wishdir, float wishspeed, float accel)
+{
+	int		i;
+	float	addspeed, accelspeed, currentspeed, wishspd = wishspeed;
+
+	if (pm->ps->pm_type == PM_DEAD)
+		return;
+	if (pm->ps->pm_flags & PMF_TIME_WATERJUMP)
+		return;
+
+	if (wishspd > 30)
+		wishspd = 30;
+
+	currentspeed = DotProduct(pm->ps->velocity, wishdir);
+	addspeed = wishspd - currentspeed;// See how much to add
+	if (addspeed <= 0)// If not adding any, done.
+		return;
+
+	accelspeed = accel * wishspeed * pml.frametime * 4.0f;// QUAKECLASSIC: accelspeed = accel * wishspeed * pmove->frametime * pmove->friction;
+
+	if (accelspeed > addspeed) // Cap it
+		accelspeed = addspeed;
+
+	for (i = 0; i<3; i++)// Adjust pmove vel.
+		pm->ps->velocity[i] += accelspeed*wishdir[i];
+}
 
 /*
 ==============
@@ -356,7 +418,34 @@ static void PM_Accelerate( vec3_t wishdir, float wishspeed, float accel ) {
 #endif
 }
 
+void CPM_PM_Aircontrol(pmove_t *pm, vec3_t wishdir, float wishspeed)
+{
+	float	zspeed, speed, dot, k;
+	int		i;
 
+	if ((pm->ps->movementDir && pm->ps->movementDir != 4) || wishspeed == 0.0)
+		return; // can't control movement if not moveing forward or backward
+
+	zspeed = pm->ps->velocity[2];
+	pm->ps->velocity[2] = 0;
+	speed = VectorNormalize(pm->ps->velocity);
+
+	dot = DotProduct(pm->ps->velocity, wishdir);
+	k = 32;
+	k *= 150.0f*dot*dot*pml.frametime;//cpm_pm_aircontrol
+
+
+	if (dot > 0) {	// we can't change direction while slowing down
+		for (i = 0; i < 2; i++)
+			pm->ps->velocity[i] = pm->ps->velocity[i] * speed + wishdir[i] * k;
+		VectorNormalize(pm->ps->velocity);
+	}
+
+	for (i = 0; i < 2; i++)
+		pm->ps->velocity[i] *= speed;
+
+	pm->ps->velocity[2] = zspeed;
+}
 
 /*
 ============
@@ -1484,8 +1573,8 @@ static void PM_AirMove( void ) {
 	vec3_t		wishdir;
 	float		wishspeed;
 	float		scale;
+	float		accelerate;
 	usercmd_t	cmd;
-
 	if (pm->ps->pm_type != PM_SPECTATOR)
 	{
 #if METROID_JUMP
@@ -1532,8 +1621,39 @@ static void PM_AirMove( void ) {
 	wishspeed = VectorNormalize(wishdir);
 	wishspeed *= scale;
 
+	accelerate = pm_airaccelerate;
+
 	// not on ground, so little effect on velocity
-	PM_Accelerate (wishdir, wishspeed, pm_airaccelerate);
+	if (PM_GetMovePhysics() == 2)
+	{
+		PM_AirAccelerate(wishdir, wishspeed, 0.7f);//pm_qw_airaccel
+	}
+	else if ((PM_GetMovePhysics() == 3) || (PM_GetMovePhysics() == 5) || (PM_GetMovePhysics() == 6) || (PM_GetMovePhysics() == 8))
+	{
+		float		accel;
+		float		wishspeed2;
+
+		wishspeed2 = wishspeed;
+		if (DotProduct(pm->ps->velocity, wishdir) < 0)
+			accel = 2.5f;//cpm_pm_airstopaccelerate 
+		else
+			accel = pm_airaccelerate;
+
+		if ((((PM_GetMovePhysics() == 3) || (PM_GetMovePhysics() == 5) || PM_GetMovePhysics() == 6) || (PM_GetMovePhysics() == 8)) && (pm->ps->movementDir == 2 || pm->ps->movementDir == 6)) {
+			if (wishspeed > 30.0f)//cpm_pm_wishspeed
+				wishspeed = 30.0f;
+			accel = 70.0f;//cpm_pm_strafeaccelerate
+		}
+
+		PM_Accelerate(wishdir, wishspeed, accel); // change dis?
+		CPM_PM_Aircontrol(pm, wishdir, wishspeed2);
+	}
+	//PM_Accelerate (wishdir, wishspeed, pm_airaccelerate);
+	else // movement style is 0 or 1
+	{
+		PM_Accelerate(wishdir, wishspeed, accelerate);
+	}
+	
 
 	// we may have a ground plane that is very steep, even
 	// though we don't have a groundentity
@@ -1825,7 +1945,7 @@ static int PM_TryRoll( void )
 
 	if ( BG_SaberInAttack( pm->ps->saberMove ) || BG_SaberInSpecialAttack( pm->ps->torsoAnim ) 
 		|| BG_SpinningSaberAnim( pm->ps->legsAnim ) 
-		|| (!pm->ps->clientNum&&PM_SaberInStart( pm->ps->saberMove )) )
+		/*|| (!pm->ps->clientNum && PM_SaberInStart( pm->ps->saberMove ))*/ )//DM - jk2PRO Client 0 fix for rolling/moving saber
 	{//attacking or spinning (or, if player, starting an attack)
 		return 0;
 	}
@@ -2794,6 +2914,9 @@ static qboolean PM_DoChargedWeapons( void )
 	qboolean	charging = qfalse,
 				altFire = qfalse;
 
+	if (pm->ps->stats[STAT_RACEMODE])
+		return qfalse;
+
 	// If you want your weapon to be a charging weapon, just set this bit up
 	switch( pm->ps->weapon )
 	{
@@ -3046,6 +3169,11 @@ int PM_ItemUsable(playerState_t *ps, int forcedUse)
 
 	if (ps->pm_flags & PMF_USE_ITEM_HELD)
 	{ //force to let go first
+		return 0;
+	}
+
+	if (ps->duelInProgress)
+	{ //not allowed to use holdables while in a private duel.
 		return 0;
 	}
 
@@ -3308,9 +3436,19 @@ static void PM_Weapon( void ) {
 	}
 
 	if (pm->ps->duelInProgress)
-	{
-		pm->cmd.weapon = WP_SABER;
-		pm->ps->weapon = WP_SABER;
+	{//jk2PRO - Serverside - All - allow weapons in gunduel - Start
+		if (dueltypes[pm->ps->clientNum] > 1) {
+			if (dueltypes[pm->ps->clientNum] == 17) {
+			}
+			else {
+				pm->cmd.weapon = dueltypes[pm->ps->clientNum] - 1;
+				pm->ps->weapon = dueltypes[pm->ps->clientNum] - 1;
+			}
+		}
+		else {
+			pm->cmd.weapon = WP_SABER;
+			pm->ps->weapon = WP_SABER;
+		}//jk2PRO - Serverside - All - allow weapons in gunduel - End
 
 		if (pm->ps->duelTime >= pm->cmd.serverTime)
 		{
@@ -3417,13 +3555,13 @@ static void PM_Weapon( void ) {
 		pm->ps->pm_flags &= ~PMF_USE_ITEM_HELD;
 	}
 
-	if (pm->ps->weapon == WP_SABER)
+	/*if (pm->ps->weapon == WP_SABER)
 	{ //we can't toggle zoom while using saber (for obvious reasons) so make sure it's always off
 		pm->ps->zoomMode = 0;
 		pm->ps->zoomFov = 0;
 		pm->ps->zoomLocked = qfalse;
 		pm->ps->zoomLockTime = 0;
-	}
+	}*/
 
 	if (killAfterItem)
 	{
@@ -3452,10 +3590,20 @@ static void PM_Weapon( void ) {
 	}
 
 	if (pm->ps->isJediMaster || pm->ps->duelInProgress)
-	{
-		pm->cmd.weapon = WP_SABER;
-		pm->ps->weapon = WP_SABER;
-
+	{//jk2PRO - Serverside - All - allow weapons in gunduel - Start
+		if (dueltypes[pm->ps->clientNum] > 1) {
+			if (dueltypes[pm->ps->clientNum] == 17) {
+			}
+			else {
+				pm->cmd.weapon = dueltypes[pm->ps->clientNum] - 1;
+				pm->ps->weapon = dueltypes[pm->ps->clientNum] - 1;
+			}
+		}
+		else {
+			pm->cmd.weapon = WP_SABER;
+			pm->ps->weapon = WP_SABER;
+		}
+		//jk2PRO - Serverside - All - allow weapons in gunduel - End
 		if (pm->ps->isJediMaster)
 		{
 			pm->ps->stats[STAT_WEAPONS] = (1 << WP_SABER);
@@ -3626,12 +3774,16 @@ static void PM_Weapon( void ) {
 	pm->ps->weaponstate = WEAPON_FIRING;
 
 	// take an ammo away if not infinite
-	if ( pm->ps->ammo[ weaponData[pm->ps->weapon].ammoIndex ] != -1 )
+	//[jk2PRO Race Mode remove weapon decrement - Start]
+	//if ( pm->ps->ammo[ weaponData[pm->ps->weapon].ammoIndex ] != -1 )
+	if (pm->ps->clientNum < MAX_CLIENTS && pm->ps->ammo[weaponData[pm->ps->weapon].ammoIndex] != -1)
 	{
 		// enough energy to fire this weapon?
 		if ((pm->ps->ammo[weaponData[pm->ps->weapon].ammoIndex] - amount) >= 0) 
 		{
-			pm->ps->ammo[weaponData[pm->ps->weapon].ammoIndex] -= amount;
+			if (!pm->ps->stats[STAT_RACEMODE])
+				pm->ps->ammo[weaponData[pm->ps->weapon].ammoIndex] -= amount;
+			//[jk2PRO Race Mode remove weapon decrement - End]
 		}
 		else	// Not enough energy
 		{
@@ -3647,22 +3799,27 @@ static void PM_Weapon( void ) {
 			return;
 		}
 	}
-
-	if ( pm->cmd.buttons & BUTTON_ALT_ATTACK ) 	{
-		if (pm->ps->weapon == WP_DISRUPTOR && pm->ps->zoomMode != 1)
-		{
-			PM_AddEvent( EV_FIRE_WEAPON );
+	if (pm->ps->stats[STAT_RACEMODE] && (pm->ps->weapon == WP_DISRUPTOR)) {
+		addTime = 600;
+	}
+	else
+	{
+		if (pm->cmd.buttons & BUTTON_ALT_ATTACK) {
+			if (pm->ps->weapon == WP_DISRUPTOR && pm->ps->zoomMode != 1)
+			{
+				PM_AddEvent(EV_FIRE_WEAPON);
+				addTime = weaponData[pm->ps->weapon].fireTime;
+			}
+			else
+			{
+				PM_AddEvent(EV_ALT_FIRE);
+				addTime = weaponData[pm->ps->weapon].altFireTime;
+			}
+		}
+		else {
+			PM_AddEvent(EV_FIRE_WEAPON);
 			addTime = weaponData[pm->ps->weapon].fireTime;
 		}
-		else
-		{
-			PM_AddEvent( EV_ALT_FIRE );
-			addTime = weaponData[pm->ps->weapon].altFireTime;
-		}
-	}
-	else {
-		PM_AddEvent( EV_FIRE_WEAPON );
-		addTime = weaponData[pm->ps->weapon].fireTime;
 	}
 
 	if ( pm->ps->powerups[PW_HASTE] ) {

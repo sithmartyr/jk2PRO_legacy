@@ -9,7 +9,7 @@
 //==================================================================
 
 // the "gameversion" client command will print this plus compile date
-#define	GAMEVERSION	"basejk"
+#define	GAMEVERSION	"jk2pro"
 
 #define BODY_QUEUE_SIZE		8
 
@@ -32,6 +32,7 @@
 #define FL_NO_BOTS				0x00002000	// spawn point not for bot use
 #define FL_NO_HUMANS			0x00004000	// spawn point just for bots
 #define FL_FORCE_GESTURE		0x00008000	// force gesture on client
+
 
 // movers are things like doors, plats, buttons, etc
 typedef enum {
@@ -88,8 +89,57 @@ typedef enum
 extern void *precachedKyle;
 extern void *g2SaberInstance;
 
+extern int dueltypes[MAX_CLIENTS];//JK2PRO - Serverside - Fullforce Duels y is this extern
+
 typedef struct gentity_s gentity_t;
 typedef struct gclient_s gclient_t;
+
+//g_tweakVote TWEAKS
+#define TV_ALLOW_SAGASPECVOTE		(1<<0)
+#define TV_ALLOW_CTFTFFASPECVOTE	(1<<1)
+#define TV_CLEAR_SPEC_VOTES			(1<<2)
+#define TV_MAPLOADTIMEOUT			(1<<3)
+#define TV_FLOODPROTECTBYIP			(1<<4)
+#define TV_MAPCHANGELOCKOUT			(1<<5)
+#define TV_MAPCHANGEVOTEDELAY		(1<<6)
+#define TV_ALLOW_SPECVOTE			(1<<7)
+#define TV_SHOW_VOTES				(1<<8)
+#define TV_ONLY_COUNT_VOTERS		(1<<9)
+#define TV_FIX_GAMETYPEMAP			(1<<10)
+
+//NT - client origin trails
+#define NUM_CLIENT_TRAILS 10
+typedef struct { //Should this store their g2 anim? for proper g2 sync?
+	vec3_t	mins, maxs;
+	vec3_t	currentOrigin;//, currentAngles; //Well r.currentAngles are never actually used by clients in this game?
+	int		time, leveltime, torsoAnim, torsoTimer, legsAnim, legsTimer;
+	float	realAngle; //Only the [YAW] is ever used for hit detection
+} clientTrail_t;
+
+typedef enum {
+	A_ADMINTELE,
+	//A_FREEZE,
+	A_TELEMARK,
+	//A_ADMINBAN,
+	//A_ADMINKICK,
+	A_NOCLIP,
+	//A_GRANTADMIN,
+	//A_CHANGEMAP,
+	//A_CSPRINT,
+	//A_FORCETEAM,
+	//A_LOCKTEAM,
+	//A_VSTR,
+	//A_SEEIP,
+	//A_RENAME,
+	A_LISTMAPS,
+	//A_BUILDHIGHSCORES,
+	//A_WHOIS,
+	//A_LOOKUP,
+	//A_NOFOLLOW,
+	//A_SEEHIDDEN,
+	A_CALLVOTE,
+	A_KILLVOTE
+} admin_type_t;
 
 struct gentity_s {
 	entityState_t	s;				// communicated by server to clients
@@ -212,6 +262,7 @@ struct gentity_s {
 	int			waterlevel;
 
 	int			noise_index;
+	int			awesomenoise_index;//jk2pro
 
 	// timing variables
 	float		wait;
@@ -293,7 +344,7 @@ typedef struct {
 // this is achieved by writing all the data to cvar strings at game shutdown
 // time and reading them back at connection time.  Anything added here
 // MUST be dealt with in G_InitSessionData() / G_ReadSessionData() / G_WriteSessionData()
-typedef struct {
+typedef struct clientSession_s {
 	team_t		sessionTeam;
 	int			spectatorTime;		// for determining next-in-line to play
 	spectatorState_t	spectatorState;
@@ -304,15 +355,65 @@ typedef struct {
 	qboolean	setForce;			// set to true once player is given the chance to set force powers
 	int			updateUITime;		// only update userinfo for FP/SL if < level.time
 	qboolean	teamLeader;			// true when this client is a team leader
+	char		siegeClass[64];
+	int			duelTeam;
+	int			siegeDesiredTeam;
+	char		IP[NET_ADDRSTRMAXLEN];
+
+	//[videoP - jk2PRO - Serverside - All - Ignore - Start]
+	unsigned int  ignore;      // contains bits of all clients to be ignored, 0 - no one ignored, 0xFFFFFFFF - ignore all
+	qboolean	  sawMOTD;	   // jk2pro has the client been shown the MOTD?
+
+	qboolean	raceMode;
+	int			movementStyle;
+
+	qboolean	juniorAdmin;
+	qboolean	fullAdmin;
+
+	char		clanpass[32];//jk2pro - Serverside Clanpass
+	int			sayteammod;//0 = normal, 1 = clan, 2 = admin
+
+	//[videoP - jk2PRO - Serverside - All - Ignore - End]
 } clientSession_t;
+
+// playerstate mGameFlags
+#define	PSG_VOTED				(1<<0)		// already cast a vote
+#define PSG_TEAMVOTED			(1<<1)		// already cast a team vote
 
 //
 #define MAX_NETNAME			36
 #define	MAX_VOTE_COUNT		3
 
+typedef struct {//JK2PRO - Serverside - Stats
+	int kills;
+	int teamKills;
+	int damageTaken;
+	int damageGiven;
+	int teamDamageGiven;
+	int	duelDamageGiven;
+
+	int startTimeFlag;//could be float?
+	float displacementFlag;
+	float topSpeedFlag;
+	int	displacementFlagSamples;
+
+	int	startTime;//For timers that are not flags
+	int	startLevelTime;//For timers that are not flags
+	float displacement;
+	int	displacementSamples;
+	float topSpeed;
+	int lastCheckpointTime;//For checkpoint floodprotect
+	int	lastResetTime;
+
+	int	teamHealGiven;
+	int	teamEnergizeGiven;
+	int	enemyDrainDamage;
+	int teamDrainDamage;
+} stats_t;
+
 // client data that stays across multiple respawns, but is cleared
 // on each level change or team change at ClientBegin()
-typedef struct {
+typedef struct clientPersistant_s {
 	clientConnected_t	connected;	
 	usercmd_t	cmd;				// we would lose angles if not persistant
 	qboolean	localClient;		// true if "ip" info key is "localhost"
@@ -326,7 +427,58 @@ typedef struct {
 	int			voteCount;			// to prevent people from constantly calling votes
 	int			teamVoteCount;		// to prevent people from constantly calling votes
 	qboolean	teamInfo;			// send team overlay updates?
+
+	
+
+	vec3_t	telemarkOrigin;
+	float	telemarkAngle;
+	float	telemarkPitchAngle;
+	vec3_t	respawnLocation;
+	float	respawnAngle;
+
+	qboolean	onlyBhop;
+	qboolean	noRoll;
+
+	int			startLag;
+
+	char		guid[33];
+	char		userName[16];
+	char		lastUserName[16];
+	int			duelStartTime;
+	qboolean	noFollow;
+	qboolean	practice;
+
+	int			vote, teamvote; // 0 = none, 1 = yes, 2 = no
+
+	qboolean	recordingDemo;//jk2pro autodemo for defrag... :S
+	qboolean	keepDemo;//jk2pro autodemo for defrag... :S
+	qboolean	showChatCP;
+	qboolean	showCenterCP;
+	char		demoName[MAX_QPATH];
+
+	stats_t		stats;
 } clientPersistant_t;
+
+typedef enum {
+	GENCMD_DELAY_SABER,
+	GENCMD_DELAY_SABERSWITCH,
+	GENCMD_DELAY_TAUNT,
+	GENCMD_DELAY_EMOTE,
+	GENCMD_DELAY_DUEL,
+	GENCMD_DELAY_HEAL,
+	GENCMD_DELAY_SPEED,
+	GENCMD_DELAY_TRICK,
+	GENCMD_DELAY_RAGE,
+	GENCMD_DELAY_PROTECT,
+	GENCMD_DELAY_ABSORB,
+	GENCMD_DELAY_SEEING,
+	GENCMD_DELAY_BINOCS,
+	GENCMD_DELAY_ZOOM,
+	GENCMD_DELAY_JETPACK,
+	GENCMD_DELAY_EWEB,
+	GENCMD_DELAY_CLOAK,
+	MAX_GENCMD_DELAYS
+} genCmdType_t;
 
 
 // this structure is cleared on each ClientSpawn(),
@@ -410,8 +562,45 @@ struct gclient_s {
 	int			dangerTime;		// level.time when last attack occured
 
 	qboolean	fjDidJump;
+
+	unsigned	mGameFlags;
+
+	int			lastUpdateFrame; // JK2PRO - Smooth clients loda
+	char		csMessage[MAX_STRING_CHARS];	// JK2PRO - Message to say CenterScreen
+	short		csTimeLeft;						// JK2PRO - Time left for client's CenterScreen
+	int			pmoveMsec;//jk2pro timers
+
+	int			lastStartTime; //for autodemo floodprotect
+
+	int			genCmdDebounce[MAX_GENCMD_DELAYS];
+	int			lastSpotTime;
+	int			lastSpottedTime;
+	short		savedJumpLevel;//rabbit
+
+	vec3_t		lastVelocity;
+
+	//Testunlagged
+	struct {
+		int				trailHead;
+		clientTrail_t	trail[NUM_CLIENT_TRAILS];
+		clientTrail_t	saved; // used to restore after time shift
+	} unlagged;
 };
 
+typedef enum //movementstyle enum
+{
+	MV_SAGA,
+	MV_JKO,
+	MV_QW,
+	MV_CPM,
+	MV_Q3,
+	MV_PJK,
+	MV_WSW,
+	MV_RJQ3,
+	MV_RJCPM,
+
+	MV_NUMSTYLES,
+} movementStyle_e;
 
 //
 // this structure is cleared as each map is entered
@@ -419,7 +608,18 @@ struct gclient_s {
 #define	MAX_SPAWN_VARS			64
 #define	MAX_SPAWN_VARS_CHARS	4096
 
-typedef struct {
+//jk2pro
+typedef struct VoteFloodProtect_s {
+	char				ip[NET_ADDRSTRMAXLEN];
+	int					failCount;
+	int					voteTimeoutUntil;
+	int					nextDropTime;
+} VoteFloodProtect_t;
+#define		voteFloodProtectSize 64
+//VoteFloodProtect_t	voteFloodProtect[voteFloodProtectSize];//32 courses, 9 styles, 10 spots on highscore list
+//jk2pro
+
+typedef struct level_locals_s {
 	struct gclient_s	*clients;		// [maxclients]
 
 	struct gentity_s	*gentities;
@@ -459,18 +659,23 @@ typedef struct {
 
 	// voting state
 	char		voteString[MAX_STRING_CHARS];
+	char		voteStringClean[MAX_STRING_CHARS];
 	char		voteDisplayString[MAX_STRING_CHARS];
 	int			voteTime;				// level.time vote was called
 	int			voteExecuteTime;		// time the vote is executed
+	int			voteExecuteDelay;		// set per-vote
 	int			voteYes;
 	int			voteNo;
 	int			numVotingClients;		// set by CalculateRanks
+	char		callVoteIP[NET_ADDRSTRMAXLEN]; //jk2pro g_tweakVote
 
 	qboolean	votingGametype;
 	int			votingGametypeTo;
 
 	// team voting state
 	char		teamVoteString[2][MAX_STRING_CHARS];
+	char		teamVoteStringClean[2][MAX_STRING_CHARS];
+	char		teamVoteDisplayString[2][MAX_STRING_CHARS];
 	int			teamVoteTime[2];		// level.time vote was called
 	int			teamVoteYes[2];
 	int			teamVoteNo[2];
@@ -501,7 +706,35 @@ typedef struct {
 	int			bodyQueIndex;			// dead bodies
 	gentity_t	*bodyQue[BODY_QUEUE_SIZE];
 	int			portalSequence;
+
+	char		courseName[24][32];//jk2pro defrag
+	int			numCourses;
+
+	int         frameStartTime;
+	struct {
+		int state; // loda fixme, not needed?	- well now it is. OSP: pause
+		int time;
+	} pause;
+
+	struct {
+		fileHandle_t	log;
+	} security;
+
+	struct {
+		int num;
+		char *infos[MAX_BOTS];
+	} bots;
+
+	struct {
+		int num;
+		char *infos[MAX_ARENAS];
+	} arenas;
+
+	gametype_t	gametype;
 } level_locals_t;
+
+extern int				g_numArenas;
+extern /*static*/ char		*g_arenaInfos[MAX_ARENAS];
 
 
 //
@@ -526,7 +759,7 @@ void Cmd_FollowCycle_f( gentity_t *ent, int dir );
 void Cmd_SaberAttackCycle_f(gentity_t *ent);
 int G_ItemUsable(playerState_t *ps, int forcedUse);
 void Cmd_ToggleSaber_f(gentity_t *ent);
-void Cmd_EngageDuel_f(gentity_t *ent);
+void Cmd_EngageDuel_f(gentity_t *ent, int dueltype);
 
 gentity_t *G_GetDuelWinner(gclient_t *client);
 
@@ -704,6 +937,7 @@ void TeleportPlayer( gentity_t *player, vec3_t origin, vec3_t angles );
 void ATST_ManageDamageBoxes(gentity_t *ent);
 int G_PlayerBecomeATST(gentity_t *ent);
 
+void AmTeleportPlayer(gentity_t *player, vec3_t origin, vec3_t angles, qboolean droptofloor, qboolean race);
 
 //
 // g_weapon.c
@@ -865,6 +1099,9 @@ void ForceThrow( gentity_t *self, qboolean pull );
 void ForceTelepathy(gentity_t *self);
 qboolean Jedi_DodgeEvasion( gentity_t *self, gentity_t *shooter, trace_t *tr, int hitLoc );
 
+//syscalls jk2pro
+//extern void JP_Trace(trace_t *results, const vec3_t start, const vec3_t mins, const vec3_t maxs, const vec3_t end, int passEntityNum, int contentmask);
+
 // g_log.c
 void QDECL G_LogPrintf( const char *fmt, ... );
 void QDECL G_LogWeaponPickup(int client, int weaponid);
@@ -982,6 +1219,50 @@ extern	vmCvar_t	g_dismember;
 extern	vmCvar_t	g_forceDodge;
 extern	vmCvar_t	g_timeouttospec;
 
+//[videoP - jk2PRO - Serverside - All - CVARS - Start]
+//jk2PRO MOVEMENT
+extern	vmCvar_t	g_movementStyle;
+
+//jk2PRO OTHER
+extern	vmCvar_t	g_tweakVote;
+extern	vmCvar_t	g_voteTimeout;
+extern	vmCvar_t	g_voteDelay;
+extern	vmCvar_t	g_duelStartHealth;
+extern	vmCvar_t	g_duelStartArmor;
+extern	vmCvar_t	g_centerMOTD;
+extern	vmCvar_t	g_centerMOTDTime;
+extern	vmCvar_t	g_consoleMOTD;
+extern	vmCvar_t	g_allowBlackNames;
+extern	vmCvar_t	g_allowSamePlayerNames;
+
+//jk2PRO ADMIN
+extern	vmCvar_t	g_juniorAdminLevel;
+extern	vmCvar_t	g_fullAdminLevel;
+extern	vmCvar_t	g_juniorAdminPass;
+extern	vmCvar_t	g_fullAdminPass;
+extern	vmCvar_t	g_juniorAdminMsg;
+extern	vmCvar_t	g_fullAdminMsg;
+extern	vmCvar_t	g_allowNoFollow;
+
+//jk2PRO RACEMODE / ACCOUNT
+extern	vmCvar_t	g_raceMode;
+extern	vmCvar_t	g_allowRaceTele;
+extern	vmCvar_t	g_forceLogin;
+
+//jk2PRO DUELING
+extern	vmCvar_t	g_duelDistanceLimit;
+extern	vmCvar_t	g_allowGunDuel;
+
+//jk2PRO CTF
+extern	vmCvar_t	g_rabbit;
+//[videoP - jk2PRO - Serverside - All - CVARS - End]
+
+typedef enum matchPause_e { //OSP: pause
+	PAUSE_NONE = 0,
+	PAUSE_PAUSED,
+	PAUSE_UNPAUSING,
+} matchPause_t;
+
 void	trap_Printf( const char *fmt );
 void	trap_Error( const char *fmt );
 int		trap_Milliseconds( void );
@@ -1009,6 +1290,7 @@ void	trap_GetUserinfo( int num, char *buffer, int bufferSize );
 void	trap_SetUserinfo( int num, const char *buffer );
 void	trap_GetServerinfo( char *buffer, int bufferSize );
 void	trap_SetBrushModel( gentity_t *ent, const char *name );
+void	JP_Trace(trace_t *results, const vec3_t start, const vec3_t mins, const vec3_t maxs, const vec3_t end, int passEntityNum, int contentmask, int capsule, int traceFlags, int useLod);
 void	trap_Trace( trace_t *results, const vec3_t start, const vec3_t mins, const vec3_t maxs, const vec3_t end, int passEntityNum, int contentmask );
 int		trap_PointContents( const vec3_t point, int passEntityNum );
 qboolean trap_InPVS( const vec3_t p1, const vec3_t p2 );

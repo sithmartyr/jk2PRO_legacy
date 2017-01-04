@@ -35,6 +35,8 @@ typedef enum {
 	WP_NUM_WEAPONS
 } weapon_t;
 
+#define LAST_USEABLE_WEAPON		WP_DET_PACK
+
 
 typedef enum //# ammo_e
 {

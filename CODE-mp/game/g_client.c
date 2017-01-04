@@ -911,7 +911,7 @@ static void ClientCleanName( const char *in, char *out, int outSize ) {
 			}
 
 			// don't allow black in a name, period
-			if( ColorIndex(*in) == 0 ) {
+			if (ColorIndex(*in) == 0 && !g_allowBlackNames.integer) {
 				in++;
 				continue;
 			}
@@ -1094,8 +1094,76 @@ void SetupGameGhoul2Model(gclient_t *client, char *modelname)
 	}
 }
 
+void StripWhitespace(char *s)
+{
+	char* i = s;
+	char* j = s;
+	while (*j != 0)
+	{
+		*i = *j++;
+		if (*i != ' ')
+			i++;
+	}
+	*i = 0;
+}
+
+static qboolean ClientNameEquals(const char *n1, const char *n2) {
+	char o1[MAX_NETNAME];
+	char o2[MAX_NETNAME];
+	//StripColors(n1, o1);
+	//StripColors(n2, o2);
+	Q_strncpyz(o1, n1, MAX_NETNAME);
+	Q_strncpyz(o2, n2, MAX_NETNAME);
+
+	Q_CleanStr(o1);
+	Q_CleanStr(o2);
+	StripWhitespace(o1);
+	StripWhitespace(o2);
+
+	return (qboolean)(Q_stricmp(o1, o2) == 0);
+}
+
+static qboolean ClientNameInUse(const char *netname, int ignore) {
+	int i;
+	for (i = 0; i < level.maxclients; ++i) {
+		if (i != ignore
+			&& level.clients[i].pers.connected != CON_DISCONNECTED
+			&& ClientNameEquals(level.clients[i].pers.netname, netname)) {
+			return qtrue;
+		}
+	}
+	return qfalse;
+}
+
+static void CheckDuplicateName(int clientNum) {
+	char *netname = level.clients[clientNum].pers.netname;
+	//char userinfo[MAX_INFO_STRING]; 
+	if (ClientNameInUse(netname, clientNum)) {
+		char bufname[MAX_NETNAME];
+		int num = 0;
+		int len = strlen(netname);
+		// make room for a number
+		// assuming a number will be 2 digits in length
+		// format will be like "%s ^7[%d]"
+
+		if (len > 28) netname[28] = 0;
+		do {
+			// move the new name to the buffer, since we shouldn't read and write in same location
+			Com_sprintf(bufname, MAX_NETNAME, "%s^7[%d]", netname, num);
+		} while (num++ < level.maxclients && ClientNameInUse(bufname, clientNum));
+		{
+			char	userinfo[MAX_INFO_STRING];
+
+			Q_strncpyz(netname, bufname, MAX_NETNAME);// move bufname back to netname
+			trap_GetUserinfo(clientNum, userinfo, sizeof(userinfo));
+			Info_SetValueForKey(userinfo, "name", bufname);
+			trap_SetUserinfo(clientNum, userinfo);
+			ClientUserinfoChanged(clientNum);
+		}
 
 
+	}
+}
 
 /*
 ===========
@@ -1152,6 +1220,9 @@ void ClientUserinfoChanged( int clientNum ) {
 	s = Info_ValueForKey (userinfo, "name");
 	ClientCleanName( s, client->pers.netname, sizeof(client->pers.netname) );
 
+	if (!g_allowSamePlayerNames.integer)//jk2pro - Serverside - Same player name fix
+		CheckDuplicateName(clientNum);
+
 	if ( client->sess.sessionTeam == TEAM_SPECTATOR ) {
 		if ( client->sess.spectatorState == SPECTATOR_SCOREBOARD ) {
 			Q_strncpyz( client->pers.netname, "scoreboard", sizeof(client->pers.netname) );
@@ -1174,7 +1245,7 @@ void ClientUserinfoChanged( int clientNum ) {
 	client->ps.stats[STAT_MAX_HEALTH] = client->pers.maxHealth;
 
 	// set model
-	if( g_gametype.integer >= GT_TEAM ) {
+	if (g_gametype.integer >= GT_TEAM) {
 		Q_strncpyz( model, Info_ValueForKey (userinfo, "team_model"), sizeof( model ) );
 		//Q_strncpyz( headModel, Info_ValueForKey (userinfo, "team_headmodel"), sizeof( headModel ) );
 	} else {
@@ -1352,7 +1423,7 @@ char *ClientConnect( int clientNum, qboolean firstTime, qboolean isBot ) {
 		trap_SendServerCommand( -1, va("print \"%s" S_COLOR_WHITE " %s\n\"", client->pers.netname, G_GetStripEdString("SVINGAME", "PLCONNECT")) );
 	}
 
-	if ( g_gametype.integer >= GT_TEAM &&
+	if (g_gametype.integer >= GT_TEAM &&
 		client->sess.sessionTeam != TEAM_SPECTATOR ) {
 		BroadcastTeamChange( client, -1 );
 	}
@@ -1493,6 +1564,26 @@ void ClientBegin( int clientNum, qboolean allowTeamReset ) {
 	modelname = Info_ValueForKey (userinfo, "model");
 	SetupGameGhoul2Model(client, modelname);
 
+	/*if (g_playerLog.integer && ent && ent->client && !(ent->r.svFlags & SVF_BOT))
+		G_AddPlayerLog(client->pers.netname, client->sess.IP, client->pers.guid);*/
+
+	if (g_raceMode.integer == 1 && g_gametype.integer == GT_FFA)//jk2pro racemode, uhh, cant think of any case where racemode should be turned off since its off by default and this is their first time in server?
+		client->sess.raceMode = qtrue;
+	else if (g_raceMode.integer && (g_gametype.integer == GT_TEAM || g_gametype.integer == GT_CTF) && client->sess.sessionTeam == TEAM_FREE)
+		client->sess.raceMode = qtrue;
+	if (client->sess.sessionTeam != TEAM_FREE && client->sess.sessionTeam != TEAM_SPECTATOR)
+		client->sess.raceMode = qfalse;
+	else if (!g_raceMode.integer)
+		client->sess.raceMode = qfalse;
+
+	if (client->sess.raceMode)
+		client->ps.stats[STAT_RACEMODE] = 1;
+	else
+		client->ps.stats[STAT_RACEMODE] = 0;
+
+	client->pers.noFollow = qfalse;
+	ent->r.svFlags &= ~SVF_SINGLECLIENT;
+
 	if (ent->client->ghoul2)
 	{
 		ent->bolt_Head = trap_G2API_AddBolt(ent->client->ghoul2, 0, "cranium");
@@ -1507,14 +1598,24 @@ void ClientBegin( int clientNum, qboolean allowTeamReset ) {
 	// locate ent at a spawn point
 	ClientSpawn( ent );
 
-	if ( client->sess.sessionTeam != TEAM_SPECTATOR ) {
+	if ( client->sess.sessionTeam != TEAM_SPECTATOR && ent->client->sess.sawMOTD == qfalse) {
 		// send event
 		tent = G_TempEntity( ent->client->ps.origin, EV_PLAYER_TELEPORT_IN );
 		tent->s.clientNum = ent->s.clientNum;
 
-		if ( g_gametype.integer != GT_TOURNAMENT  ) {
+		if (Q_stricmp(g_consoleMOTD.string, ""))
+			trap_SendServerCommand(ent - g_entities, va("print \"%s\n\"", g_consoleMOTD.string));
+
+		if (Q_stricmp(g_centerMOTD.string, "")) {
+			strcpy(ent->client->csMessage, G_NewString(va("^7%s\n", g_centerMOTD.string)));
+			ent->client->csTimeLeft = g_centerMOTDTime.integer;
+		}
+
+		if (g_gametype.integer != GT_TOURNAMENT) {
 			trap_SendServerCommand( -1, va("print \"%s" S_COLOR_WHITE " %s\n\"", client->pers.netname, G_GetStripEdString("SVINGAME", "PLENTER")) );
 		}
+
+		ent->client->sess.sawMOTD = qtrue;
 	}
 	G_LogPrintf( "ClientBegin: %i\n", clientNum );
 
@@ -1567,7 +1668,8 @@ void ClientSpawn(gentity_t *ent) {
 	if ( client->sess.sessionTeam == TEAM_SPECTATOR ) {
 		spawnPoint = SelectSpectatorSpawnPoint ( 
 						spawn_origin, spawn_angles);
-	} else if (g_gametype.integer == GT_CTF || g_gametype.integer == GT_CTY) {
+	} 
+	else if (g_gametype.integer == GT_CTF || g_gametype.integer == GT_CTY) {
 		// all base oriented team games use the CTF spawn points
 		spawnPoint = SelectCTFSpawnPoint ( 
 						client->sess.sessionTeam, 
@@ -1718,6 +1820,35 @@ void ClientSpawn(gentity_t *ent) {
 	{
 		wDisable = g_weaponDisable.integer;
 	}
+
+	//[videoP - jk2PRO - Serverside - All - More Racemode Stuff - Start]
+	if (g_raceMode.integer == 1 && g_gametype.integer == GT_FFA)
+		client->sess.raceMode = qtrue;
+	else if (g_raceMode.integer && (g_gametype.integer == GT_TEAM || g_gametype.integer == GT_CTF) && client->sess.sessionTeam == TEAM_FREE)
+		client->sess.raceMode = qtrue;
+	if (client->sess.sessionTeam != TEAM_FREE && client->sess.sessionTeam != TEAM_SPECTATOR)
+		client->sess.raceMode = qfalse;
+	else if (!g_raceMode.integer)
+		client->sess.raceMode = qfalse;
+
+	if (client->sess.raceMode)
+		client->ps.stats[STAT_RACEMODE] = 1;
+	else
+		client->ps.stats[STAT_RACEMODE] = 0;
+
+
+	client->savedJumpLevel = 0;//rabbit
+
+	if (g_gametype.integer != GT_SAGA) {
+		if (client->sess.raceMode) {
+			client->ps.stats[STAT_WEAPONS] |= (1 << WP_DISRUPTOR); //give them disruptor instead of pistol, since pistol fucks dyn crosshair/strafehelper
+			client->ps.stats[STAT_WEAPONS] |= (1 << WP_SABER);
+			client->ps.ammo[AMMO_POWERCELL] = 300;
+		}
+	}
+	//[videoP - jk2PRO - Serverside - All - More Racemode Stuff - End]
+
+	
 
 	if (!wDisable || !(wDisable & (1 << WP_BRYAR_PISTOL)))
 	{
@@ -1951,7 +2082,7 @@ void ClientDisconnect( int clientNum ) {
 	G_LogPrintf( "ClientDisconnect: %i\n", clientNum );
 
 	// if we are playing in tourney mode and losing, give a win to the other player
-	if ( (g_gametype.integer == GT_TOURNAMENT )
+	if ((g_gametype.integer == GT_TOURNAMENT)
 		&& !level.intermissiontime
 		&& !level.warmupTime && level.sortedClients[1] == clientNum ) {
 		level.clients[ level.sortedClients[0] ].sess.wins++;
