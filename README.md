@@ -3,7 +3,7 @@
 </p>
 # jk2PRO
 
-The is a modification for Jedi Knight II: Jedi Outcast Multiplayer.
+This is a modification for Jedi Knight II: Jedi Outcast Multiplayer.
 
 The primary goals for this mod are as follows:
 
