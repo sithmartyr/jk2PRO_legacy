@@ -1,0 +1,48 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 14
+VisualStudioVersion = 14.0.25420.1
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "JK2cgame", "cgame\JK2_cgame.vcxproj", "{D454E373-BCE8-B646-67F8-24CD1BD25552}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "JK2game", "game\JK2_game.vcxproj", "{DB2C16E8-4529-DB57-C39A-9C94B89FEDB6}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ui", "ui\ui.vcxproj", "{E57A50F1-93C3-FFCC-69F9-7A512D514404}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug JK2|Win32 = Debug JK2|Win32
+		Final JK2|Win32 = Final JK2|Win32
+		Release JK2|Win32 = Release JK2|Win32
+		Template|Win32 = Template|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D454E373-BCE8-B646-67F8-24CD1BD25552}.Debug JK2|Win32.ActiveCfg = Debug JK2|Win32
+		{D454E373-BCE8-B646-67F8-24CD1BD25552}.Debug JK2|Win32.Build.0 = Debug JK2|Win32
+		{D454E373-BCE8-B646-67F8-24CD1BD25552}.Final JK2|Win32.ActiveCfg = Final JK2|Win32
+		{D454E373-BCE8-B646-67F8-24CD1BD25552}.Final JK2|Win32.Build.0 = Final JK2|Win32
+		{D454E373-BCE8-B646-67F8-24CD1BD25552}.Release JK2|Win32.ActiveCfg = Release JK2|Win32
+		{D454E373-BCE8-B646-67F8-24CD1BD25552}.Release JK2|Win32.Build.0 = Release JK2|Win32
+		{D454E373-BCE8-B646-67F8-24CD1BD25552}.Template|Win32.ActiveCfg = Release JK2|Win32
+		{D454E373-BCE8-B646-67F8-24CD1BD25552}.Template|Win32.Build.0 = Release JK2|Win32
+		{DB2C16E8-4529-DB57-C39A-9C94B89FEDB6}.Debug JK2|Win32.ActiveCfg = Debug JK2|Win32
+		{DB2C16E8-4529-DB57-C39A-9C94B89FEDB6}.Debug JK2|Win32.Build.0 = Debug JK2|Win32
+		{DB2C16E8-4529-DB57-C39A-9C94B89FEDB6}.Final JK2|Win32.ActiveCfg = Final JK2|Win32
+		{DB2C16E8-4529-DB57-C39A-9C94B89FEDB6}.Final JK2|Win32.Build.0 = Final JK2|Win32
+		{DB2C16E8-4529-DB57-C39A-9C94B89FEDB6}.Release JK2|Win32.ActiveCfg = Release JK2|Win32
+		{DB2C16E8-4529-DB57-C39A-9C94B89FEDB6}.Release JK2|Win32.Build.0 = Release JK2|Win32
+		{DB2C16E8-4529-DB57-C39A-9C94B89FEDB6}.Template|Win32.ActiveCfg = Template|Win32
+		{DB2C16E8-4529-DB57-C39A-9C94B89FEDB6}.Template|Win32.Build.0 = Template|Win32
+		{E57A50F1-93C3-FFCC-69F9-7A512D514404}.Debug JK2|Win32.ActiveCfg = Debug JK2|Win32
+		{E57A50F1-93C3-FFCC-69F9-7A512D514404}.Debug JK2|Win32.Build.0 = Debug JK2|Win32
+		{E57A50F1-93C3-FFCC-69F9-7A512D514404}.Final JK2|Win32.ActiveCfg = Final JK2|Win32
+		{E57A50F1-93C3-FFCC-69F9-7A512D514404}.Final JK2|Win32.Build.0 = Final JK2|Win32
+		{E57A50F1-93C3-FFCC-69F9-7A512D514404}.Release JK2|Win32.ActiveCfg = Release JK2|Win32
+		{E57A50F1-93C3-FFCC-69F9-7A512D514404}.Release JK2|Win32.Build.0 = Release JK2|Win32
+		{E57A50F1-93C3-FFCC-69F9-7A512D514404}.Template|Win32.ActiveCfg = Template|Win32
+		{E57A50F1-93C3-FFCC-69F9-7A512D514404}.Template|Win32.Build.0 = Template|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
