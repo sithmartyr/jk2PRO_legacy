@@ -3529,7 +3529,7 @@ static void Cmd_MovementStyle_f(gentity_t *ent)
 		return;
 
 	if (trap_Argc() != 2) {
-		trap_SendServerCommand(ent - g_entities, "print \"Usage: /move <saga, jko, qw, cpm, q3, pjk, wsw, rjq3, or rjcpm>.\n\"");
+		trap_SendServerCommand(ent - g_entities, "print \"Usage: /move <saga, jk2, qw, cpm, q3, pjk, wsw, rjq3, or rjcpm>.\n\"");
 		return;
 	}
 
@@ -3579,7 +3579,7 @@ static void Cmd_MovementStyle_f(gentity_t *ent)
 			trap_SendServerCommand(ent - g_entities, "print \"Movement style updated.\n\"");
 	}
 	else
-		trap_SendServerCommand(ent - g_entities, "print \"Usage: /move <siege, jka, qw, cpm, q3, pjk, wsw, rjq3, rjcpm, swoop, or jetpack>.\n\"");
+		trap_SendServerCommand(ent - g_entities, "print \"Usage: /move <siege, jk2, qw, cpm, q3, pjk, wsw, rjq3, rjcpm, swoop, or jetpack>.\n\"");
 }
 
 static void Cmd_JumpChange_f(gentity_t *ent)

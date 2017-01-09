@@ -1471,7 +1471,7 @@ void ClientThink_real( gentity_t *ent ) {
 				client->ps.speed *= 1.3f;*/
 		}
 	}
-	client->ps.basespeed = g_speed.value;
+	client->ps.basespeed = client->ps.speed;//g_speed.value;
 
 	if (ent->client->ps.duelInProgress)
 	{

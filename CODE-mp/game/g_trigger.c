@@ -546,8 +546,8 @@ void TimerStop(gentity_t *trigger, gentity_t *player, trace_t *trace) {//JK2PRO 
 		if (player->client->ps.stats[STAT_RACEMODE]) {
 			if (player->client->ps.stats[STAT_MOVEMENTSTYLE] == MV_SAGA)
 				Q_strncpyz(style, "siege", sizeof(style));
-			else if (player->client->ps.stats[STAT_MOVEMENTSTYLE] == MV_JKO)
-				Q_strncpyz(style, "jka", sizeof(style));
+			else if (player->client->ps.stats[STAT_MOVEMENTSTYLE] == MV_JK2)
+				Q_strncpyz(style, "jk2", sizeof(style));
 			else if (player->client->ps.stats[STAT_MOVEMENTSTYLE] == MV_QW)
 				Q_strncpyz(style, "qw", sizeof(style));
 			else if (player->client->ps.stats[STAT_MOVEMENTSTYLE] == MV_CPM)
@@ -565,8 +565,8 @@ void TimerStop(gentity_t *trigger, gentity_t *player, trace_t *trace) {//JK2PRO 
 		}
 		else if (g_movementStyle.integer == MV_SAGA)
 			Q_strncpyz(style, "siege", sizeof(style));
-		else if (g_movementStyle.integer == MV_JKO)
-			Q_strncpyz(style, "jka", sizeof(style));
+		else if (g_movementStyle.integer == MV_JK2)
+			Q_strncpyz(style, "jk2", sizeof(style));
 		else if (g_movementStyle.integer == MV_QW)
 			Q_strncpyz(style, "qw", sizeof(style));
 		else if (g_movementStyle.integer == MV_CPM)

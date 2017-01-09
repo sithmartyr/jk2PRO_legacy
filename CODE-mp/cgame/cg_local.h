@@ -76,9 +76,14 @@
 #define TEAM_OVERLAY_MAXNAME_WIDTH	12
 #define TEAM_OVERLAY_MAXLOCATION_WIDTH	16
 
-#define	DEFAULT_MODEL			"kyle/default"
-#define	DEFAULT_TEAM_MODEL		"kyle/default"
-#define	DEFAULT_TEAM_HEAD		"kyle/default"
+//#define	DEFAULT_MODEL			"kyle/default"
+//#define	DEFAULT_TEAM_MODEL		"kyle/default"
+//#define	DEFAULT_TEAM_HEAD		"kyle/default"
+
+#define	DEFAULT_MODEL			"kyle"
+#define	DEFAULT_TEAM_MODEL		"kyle"
+#define	DEFAULT_TEAM_HEAD		"kyle"
+
 
 #define DEFAULT_FORCEPOWERS		"5-1-000000000000000000"
 //"rank-side-heal.lev.speed.push.pull.tele.grip.lightning.rage.protect.absorb.teamheal.teamforce.drain.see"
@@ -86,7 +91,7 @@
 #define DEFAULT_REDTEAM_NAME		"Empire"
 #define DEFAULT_BLUETEAM_NAME		"Rebellion"
 
-extern int dueltypes[MAX_CLIENTS];//jk2PRO - Serverside - Fullforce Duels
+extern int dueltypes[MAX_CLIENTS];//jk2PRO - Clientside - Fullforce Duels
 
 typedef enum {
 	FOOTSTEP_NORMAL,

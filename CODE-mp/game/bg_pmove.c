@@ -550,6 +550,9 @@ qboolean PM_ForceJumpingUp(void)
 		return qfalse;
 	}
 
+	if ((PM_GetMovePhysics() == 3) || (PM_GetMovePhysics() == 4) || (PM_GetMovePhysics() == 6) || (PM_GetMovePhysics() == 7) || (PM_GetMovePhysics() == 8))
+		return qfalse;
+
 	if (!BG_CanUseFPNow(pm->gametype, pm->ps, pm->cmd.serverTime, FP_LEVITATION))
 	{
 		return qfalse;

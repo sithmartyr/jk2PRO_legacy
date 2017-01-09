@@ -590,7 +590,7 @@ struct gclient_s {
 typedef enum //movementstyle enum
 {
 	MV_SAGA,
-	MV_JKO,
+	MV_JK2,
 	MV_QW,
 	MV_CPM,
 	MV_Q3,

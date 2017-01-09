@@ -5,15 +5,9 @@
 #include "q_shared.h"
 #include "bg_public.h"
 
-//This is a shitty way of doing this :S
-//This is used to compile a game, or a cgame.  Uncomment _GAME to compile game and comment it to compile cgame.
-//#define _GAME 1
-
 #ifdef QAGAME
-//#ifdef _GAME
-//#include "g_local.h"
+#include "g_local.h"
 #endif
-//#endif
 
 #ifdef UI_EXPORTS
 #include "../ui/ui_local.h"
@@ -21,11 +15,9 @@
 
 #ifndef UI_EXPORTS
 #ifndef QAGAME
-//#ifndef _GAME
 #include "../cgame/cg_local.h"
 #endif
 #endif
-//#endif
 
 int dueltypes[MAX_CLIENTS];//jk2PRO - Serverside - Fullforce Duels
 
