@@ -786,11 +786,11 @@ void CG_AddViewWeapon( playerState_t *ps ) {
 	}
 
 	// drop gun lower at higher fov
-	/*if ( cgFov > 90 ) {
+	if ( cgFov > 90 ) {
 		fovOffset = -0.2 * ( cgFov - 90 );
-	} else {*/
+	} else {
 		fovOffset = 0;
-	//}
+	}
 
 	cent = &cg.predictedPlayerEntity;	// &cg_entities[cg.snap->ps.clientNum];
 	CG_RegisterWeapon( ps->weapon );

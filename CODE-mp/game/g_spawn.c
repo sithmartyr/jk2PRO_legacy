@@ -198,9 +198,6 @@ void SP_emplaced_gun( gentity_t *ent );
 spawn_t	spawns[] = {
 	// info entities don't do anything at all, but provide positional
 	// information for things controlled by other processes
-	{"df_trigger_checkpoint", SP_trigger_timer_checkpoint},//JK2PRO TIMERS
-	{"df_trigger_finish", SP_trigger_timer_stop},//JK2PRO TIMERS
-	{"df_trigger_start", SP_trigger_timer_start},//JK2PRO TIMERS
 	{"info_player_start", SP_info_player_start},
 	{"info_player_deathmatch", SP_info_player_deathmatch},
 	{"info_player_imperial", SP_info_player_imperial},
@@ -283,6 +280,10 @@ spawn_t	spawns[] = {
 	{"item_botroam", SP_item_botroam},
 
 	{"emplaced_gun", SP_emplaced_gun},
+
+	{ "df_trigger_checkpoint", SP_trigger_timer_checkpoint },//JK2PRO TIMERS
+	{ "df_trigger_finish", SP_trigger_timer_stop },//JK2PRO TIMERS
+	{ "df_trigger_start", SP_trigger_timer_start },//JK2PRO TIMERS
 
 	{0, 0}
 };

@@ -422,6 +422,10 @@ vmCvar_t	cg_animBlend;
 vmCvar_t	cg_dismember;
 
 //jk2pro Client Cvars
+vmCvar_t	cg_raceTimer;
+vmCvar_t	cg_raceTimerSize;
+vmCvar_t	cg_raceTimerX;
+vmCvar_t	cg_raceTimerY;
 vmCvar_t	cg_speedometer;
 vmCvar_t	cg_speedometerX;
 vmCvar_t	cg_speedometerY;
@@ -570,6 +574,10 @@ static cvarTable_t cvarTable[] = { // bk001129
 	{ &cg_dismember, "cg_dismember", "0", 0 },
 
 	//jk2pro Client Cvars
+	{ &cg_raceTimer, "cg_raceTimer", "0", 0 },
+	{ &cg_raceTimerSize, "cg_raceTimerSize", "0.75", 0},
+	{ &cg_raceTimerX, "cg_raceTimerX", "5", 0},
+	{ &cg_raceTimerY, "cg_raceTimerY", "280", 0 },
 	{ &cg_speedometer, "cg_speedometer", "0", 0 },
 	{ &cg_speedometerX, "cg_speedometerX", "132", 0 },
 	{ &cg_speedometerY, "cg_speedometerY", "459", 0 },

@@ -34,12 +34,17 @@ set cc=..\..\..\bin\lcc -DQ3_VM -S -Wf-target=bytecode -Wf-g -I..\..\cgame -I..\
 ..\..\..\bin\q3asm -f ../ui
 @if errorlevel 1 goto pause
 
-mkdir "..\base\vm"
-copy *.qvm "..\base\vm"
+mkdir "..\..\base\vm"
+copy *.qvm "..\..\base\vm"
 goto quit
 
 :pause
 pause
+
+:quit
+cd ..
+del ".\vm" /f /s /q
+rmdir ".\vm"
 
 :quit
 cd ..

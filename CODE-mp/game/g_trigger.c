@@ -13,7 +13,6 @@ void InitTrigger( gentity_t *self ) {
 	self->r.svFlags = SVF_NOCLIENT;
 }
 
-
 // the wait time has passed, so set back up for another activation
 void multi_wait( gentity_t *ent ) {
 	ent->nextthink = 0;
@@ -411,8 +410,6 @@ void TimerStart(gentity_t *trigger, gentity_t *player, trace_t *trace) {//JK2PRO
 	if (player->client->ps.pm_type != PM_NORMAL && player->client->ps.pm_type != PM_FLOAT && player->client->ps.pm_type != PM_FREEZE)
 		return;
 
-	//trap->Print("Actual trigger touch! time: %i\n", GetTimeMS());
-
 	//jk2pro - addlater - auto demo record stuff
 	/*if (player->client->pers.recordingDemo && player->client->pers.keepDemo) {
 		//We are still recording a demo that we want to keep?
@@ -422,7 +419,7 @@ void TimerStart(gentity_t *trigger, gentity_t *player, trace_t *trace) {//JK2PRO
 		player->client->pers.recordingDemo = qfalse;
 	}
 
-	
+
 	if ((sv_autoRaceDemo.integer) && !(player->client->pers.noFollow) && !(player->client->pers.practice) && player->client->sess.raceMode && !sv_cheats.integer && player->client->pers.userName[0]) {
 		if (!player->client->pers.recordingDemo) { //Start the new demo
 			player->client->pers.recordingDemo = qtrue;
@@ -439,22 +436,14 @@ void TimerStart(gentity_t *trigger, gentity_t *player, trace_t *trace) {//JK2PRO
 	}
 	player->client->lastStartTime = level.time;
 	player->client->pers.keepDemo = qfalse;*/
+	//jk2pro - addlater - END auto demo record stuff
 
-	multi_trigger(trigger, player); //Let it have a target, so it can point to restricts.  Move this up here, so swoops can activate it for proper swoop teleporting?
+	//multi_trigger(trigger, player); //Let it have a target, so it can point to restricts.  Move this up here, so swoops can activate it for proper swoop teleporting?
 
 	if (trigger->noise_index)
 		G_Sound(player, CHAN_AUTO, trigger->noise_index);//could just use player instead of trigger->activator ?   How do we make this so only the activator hears it?
 
-	player->client->pers.startLag = GetTimeMS() - level.frameStartTime + level.time - player->client->pers.cmd.serverTime; //use level.previousTime?
-	//trap->SendServerCommand( player-g_entities, va("chat \"startlag: %i\"", player->client->pers.startLag));
-
-	/*
-	//fixme?
-	so we need to get StartLag, defined by the difference between level.time and cmd.servertime.  i dont think it should be related to trap->milliseconds.
-	level.frameStartTime is just trap_milliseconds at the start of the frame.
-	level.time is just incrempted by a constant every frame (1000 / sv_fps->integer)
-	how often is pers.cmd.serverTime updated? every client frame? maybe it should use trap->milliseconds then.. :/
-	*/
+	player->client->pers.startLag = GetTimeMS() - level.frameStartTime + level.time - player->client->pers.cmd.serverTime; 
 
 	player->client->pers.stats.startLevelTime = level.time; //Should this use trap milliseconds instead.. 
 	player->client->pers.stats.startTime = GetTimeMS();
@@ -463,9 +452,6 @@ void TimerStart(gentity_t *trigger, gentity_t *player, trace_t *trace) {//JK2PRO
 	player->client->pers.stats.topSpeed = 0;
 	player->client->pers.stats.displacement = 0;
 	player->client->pers.stats.displacementSamples = 0;
-
-	//if (player->r.svFlags & SVF_JUNIORADMIN)
-	//trap->SendServerCommand(player-g_entities, va("cp \"Starting lag: %i\n 2: %i\n 3: %i\n\"", player->client->pers.startLag, level.time - player->client->pers.cmd.serverTime, GetTimeMS() - player->client->pers.cmd.serverTime));
 
 	if (player->client->ps.stats[STAT_RACEMODE]) {
 		player->client->ps.duelTime = level.time - lessTime;//player->client->pers.stats.startTime;//level.time;
@@ -494,7 +480,7 @@ void TimerStop(gentity_t *trigger, gentity_t *player, trace_t *trace) {//JK2PRO 
 	if (player->client->ps.pm_type != PM_NORMAL && player->client->ps.pm_type != PM_FLOAT && player->client->ps.pm_type != PM_FREEZE)
 		return;
 
-	multi_trigger(trigger, player);
+	//multi_trigger(trigger, player);
 
 	if (player->client->pers.stats.startTime) {
 		char style[32] = { 0 }, timeStr[32] = { 0 }, playerName[MAX_NETNAME] = { 0 };
@@ -539,7 +525,7 @@ void TimerStop(gentity_t *trigger, gentity_t *player, trace_t *trace) {//JK2PRO 
 		}
 
 		if (valid && (player->client->ps.stats[STAT_MOVEMENTSTYLE] == 1) && trigger->awesomenoise_index && (time <= trigger->speed)) //Play the awesome noise if they were fast enough
-			G_Sound(player, CHAN_AUTO, trigger->awesomenoise_index);//Just play it in jka physics for now...
+			G_Sound(player, CHAN_AUTO, trigger->awesomenoise_index);//Just play it in jk2 physics for now...
 		else if (trigger->noise_index)
 			G_Sound(player, CHAN_AUTO, trigger->noise_index);
 

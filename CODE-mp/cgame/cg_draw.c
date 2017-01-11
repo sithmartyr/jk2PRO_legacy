@@ -1059,12 +1059,13 @@ void CG_DrawHUD(centity_t	*cent)
 	int	scoreBias;
 	char scoreBiasStr[16];
 
-	if (cg.jk2pro.detected || cg_speedometer.integer)
+	if ((cg.jk2pro.detected && cg_raceTimer.integer > 1) || cg_speedometer.integer)
 		CG_CalculateSpeed(cent);
-
 	if (cg_speedometer.integer)
 		CG_Speedometer(cent);
 
+	if (cg.jk2pro.detected && cg_raceTimer.integer)
+		CG_RaceTimer(cent);
 
 	if (cg_hudFiles.integer)
 	{
@@ -4466,6 +4467,46 @@ static void CG_CalculateSpeed(centity_t *cent) {
 	cg.jk2pro.currentSpeed = sqrt(velocity[0] * velocity[0] + velocity[1] * velocity[1]); // is this right?
 }
 
+
+#define STAT_RACEMODE 11
+static void CG_RaceTimer(centity_t *cent)
+{
+	char timerStr[32] = { 0 };
+	int time, minutes, seconds, deciseconds;
+
+	if (!cg.predictedPlayerState.stats[STAT_RACEMODE])
+		return;
+	if (!cg.predictedPlayerState.duelTime)
+		return;
+
+	time = (cg.time - cg.predictedPlayerState.duelTime);
+	minutes = (time / 1000) / 60;
+	seconds = (time / 1000) % 60;
+	deciseconds = time % 1000;
+	deciseconds = deciseconds / 100;
+
+	if (cg_raceTimer.integer > 1) {
+		if (time < 1000) {
+			cg.jk2pro.displacement = 0;
+			cg.jk2pro.maxSpeed = 0;
+			cg.jk2pro.displacementSamples = 0;
+		}
+		else {
+			const float currentSpeed = cg.jk2pro.currentSpeed;
+
+			if (currentSpeed > cg.jk2pro.maxSpeed)
+				cg.jk2pro.maxSpeed = currentSpeed;
+			cg.jk2pro.displacement += currentSpeed;
+			cg.jk2pro.displacementSamples++;
+		}
+	}
+
+	if (cg_raceTimer.integer > 1 /*&& cg.jk2pro.displacementSamples*/)
+		Com_sprintf(timerStr, sizeof(timerStr), "%i:%02i.%i\nMax: %i\nAvg: %i", minutes, seconds, deciseconds, (int)floorf(cg.jk2pro.maxSpeed + 0.5f), cg.jk2pro.displacement / cg.jk2pro.displacementSamples);
+	else
+		Com_sprintf(timerStr, sizeof(timerStr), "%i:%02i.%i\n", minutes, seconds, deciseconds);
+	CG_Text_Paint(cg_raceTimerX.integer, cg_raceTimerY.integer, cg_raceTimerSize.value, colorTable[CT_WHITE], timerStr, 0.0f, 0, ITEM_ALIGN_RIGHT | ITEM_TEXTSTYLE_OUTLINED, FONT_NONE);
+}
 
 static void CG_Speedometer(centity_t *cent)
 {

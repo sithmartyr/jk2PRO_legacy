@@ -116,6 +116,7 @@ void TeleportPlayer( gentity_t *player, vec3_t origin, vec3_t angles ) {
 	}
 }
 
+void ResetPlayerTimers(gentity_t *ent, qboolean print);
 //videoP - jk2PRO - Serverside - New teleport Function - Start
 void AmTeleportPlayer(gentity_t *player, vec3_t origin, vec3_t angles, qboolean droptofloor, qboolean race) {
 	gentity_t	*tent;
@@ -142,7 +143,7 @@ void AmTeleportPlayer(gentity_t *player, vec3_t origin, vec3_t angles, qboolean 
 		wasNoClip = qtrue;
 
 	player->client->noclip = qtrue;
-	//DM - addlater ResetPlayerTimers(player, qtrue);
+	ResetPlayerTimers(player, qtrue);
 	player->client->ps.fd.forceJumpZStart = -65536;
 	/* No jetpack in JK2......yet?.....
 	if (player->client->sess.raceMode && player->client->sess.movementStyle == MV_JETPACK) {

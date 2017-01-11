@@ -1242,6 +1242,7 @@ gentity_t *G_GetJediMaster(void)
 player_die
 ==================
 */
+void ResetPlayerTimers(gentity_t *ent, qboolean print);
 void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int damage, int meansOfDeath ) {
 	gentity_t	*ent;
 	int			anim;
@@ -1258,6 +1259,8 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 	if ( level.intermissiontime ) {
 		return;
 	}
+
+	ResetPlayerTimers(self, qfalse);
 
 	if (inflictor && inflictor->activator && !inflictor->client && !attacker->client &&
 		inflictor->activator->client && inflictor->activator->inuse &&

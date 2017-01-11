@@ -592,7 +592,7 @@ void DeletePlayerProjectiles(gentity_t *ent) {
 	}
 }
 
-void ResetPlayerTimers(gentity_t *ent, qboolean print)
+void ID_INLINE ResetPlayerTimers(gentity_t *ent, qboolean print)
 {
 	qboolean wasReset = qfalse;;
 
@@ -643,7 +643,7 @@ argv(0) noclip
 void Cmd_RaceNoclip_f(gentity_t *ent) {
 	trap_SendServerCommand(ent - g_entities, va("print \"%s\n\"", ent->client->noclip ? "noclip OFF" : "noclip ON"));
 	ent->client->noclip = !ent->client->noclip;
-	//DM - addlater ResetPlayerTimers(ent, qtrue);
+	ResetPlayerTimers(ent, qtrue);
 }
 
 void Cmd_Noclip_f( gentity_t *ent ) {
@@ -680,7 +680,7 @@ void Cmd_Noclip_f( gentity_t *ent ) {
 					ent->client->noclip = qfalse;
 					trap_SendServerCommand(ent - g_entities, "print \"noclip OFF\n\"");
 					AmTeleportPlayer(ent, ent->client->ps.origin, ent->client->ps.viewangles, qtrue, qtrue);
-					//DM - addlater ResetPlayerTimers(ent, qtrue);
+					ResetPlayerTimers(ent, qtrue);
 				}
 				else if (g_allowRaceTele.integer > 1 && ent->client->sess.raceMode) {
 					Cmd_RaceNoclip_f(ent);
@@ -699,7 +699,7 @@ void Cmd_Noclip_f( gentity_t *ent ) {
 					ent->client->noclip = qfalse;
 					trap_SendServerCommand(ent - g_entities, "print \"noclip OFF\n\"");
 					AmTeleportPlayer(ent, ent->client->ps.origin, ent->client->ps.viewangles, qtrue, qtrue);
-					//DM - addlater ResetPlayerTimers(ent, qtrue);
+					ResetPlayerTimers(ent, qtrue);
 				}
 				else if (g_allowRaceTele.integer > 1 && ent->client->sess.raceMode) {
 					Cmd_RaceNoclip_f(ent);
@@ -716,7 +716,7 @@ void Cmd_Noclip_f( gentity_t *ent ) {
 				ent->client->noclip = qfalse;
 				trap_SendServerCommand(ent - g_entities, "print \"noclip OFF\n\"");
 				AmTeleportPlayer(ent, ent->client->ps.origin, ent->client->ps.viewangles, qtrue, qtrue); //Good
-				//DM - addlater ResetPlayerTimers(ent, qtrue);
+				ResetPlayerTimers(ent, qtrue);
 			}
 			else if (g_allowRaceTele.integer > 1 && ent->client->sess.raceMode) {
 				Cmd_RaceNoclip_f(ent);
@@ -743,7 +743,7 @@ void Cmd_Noclip_f( gentity_t *ent ) {
 			if (target->client->sess.raceMode && target->client->noclip)
 				AmTeleportPlayer(target, target->client->ps.origin, target->client->ps.viewangles, qtrue, qtrue); //Good
 			target->client->noclip = !target->client->noclip;
-			//DM - addlater ResetPlayerTimers(target, qtrue);
+			ResetPlayerTimers(target, qtrue);
 			return;
 		}
 		if (trap_Argc() == 1) {
@@ -751,7 +751,7 @@ void Cmd_Noclip_f( gentity_t *ent ) {
 			if (ent->client->sess.raceMode && ent->client->noclip)
 				AmTeleportPlayer(ent, ent->client->ps.origin, ent->client->ps.viewangles, qtrue, qtrue); //Good
 			ent->client->noclip = !ent->client->noclip;
-			//DM - addlater ResetPlayerTimers(ent, qtrue);
+			ResetPlayerTimers(ent, qtrue);
 			return;
 		}
 	/*}

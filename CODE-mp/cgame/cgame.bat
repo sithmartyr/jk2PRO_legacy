@@ -104,4 +104,5 @@ pause
 
 :quit
 cd ..
-pause
+del ".\vm" /f /s /q
+rmdir ".\vm"

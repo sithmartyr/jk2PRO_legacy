@@ -1493,6 +1493,10 @@ extern	vmCvar_t		cg_animBlend;
 extern	vmCvar_t		cg_dismember;
 
 //jk2pro Client Cvars
+extern	vmCvar_t		cg_raceTimer;
+extern	vmCvar_t		cg_raceTimerSize;
+extern	vmCvar_t		cg_raceTimerX;
+extern	vmCvar_t		cg_raceTimerY;
 extern	vmCvar_t		cg_speedometer;
 extern	vmCvar_t		cg_speedometerX;
 extern	vmCvar_t		cg_speedometerY;
