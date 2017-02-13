@@ -4501,7 +4501,7 @@ static void CG_RaceTimer(centity_t *cent)
 		}
 	}
 
-	if (cg_raceTimer.integer > 1 /*&& cg.jk2pro.displacementSamples*/)
+	if (cg_raceTimer.integer > 1 && cg.jk2pro.displacementSamples)
 		Com_sprintf(timerStr, sizeof(timerStr), "%i:%02i.%i\nMax: %i\nAvg: %i", minutes, seconds, deciseconds, (int)floorf(cg.jk2pro.maxSpeed + 0.5f), cg.jk2pro.displacement / cg.jk2pro.displacementSamples);
 	else
 		Com_sprintf(timerStr, sizeof(timerStr), "%i:%02i.%i\n", minutes, seconds, deciseconds);

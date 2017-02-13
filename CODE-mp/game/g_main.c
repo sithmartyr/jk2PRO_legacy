@@ -97,6 +97,11 @@ vmCvar_t	g_forceDodge;
 vmCvar_t	g_timeouttospec;
 
 //[videoP - jk2PRO - Serverside - All - Ignore - Start]
+//jk2PRO SECURITY
+vmCvar_t	g_antiFakePlayer;
+vmCvar_t	g_maxConnPerIP;
+vmCvar_t	g_playerLog;
+
 //jk2PRO MOVEMENT
 vmCvar_t	g_movementStyle;
 
@@ -133,6 +138,9 @@ vmCvar_t	g_allowGunDuel;
 //jk2PRO CTF
 vmCvar_t	g_rabbit;
 //[videoP - jk2PRO - Serverside - All - Ignore - End]
+
+vmCvar_t	sv_maxclients;
+extern vmCvar_t	sv_fps;
 
 int gDuelist1 = -1;
 int gDuelist2 = -1;
@@ -250,6 +258,11 @@ static cvarTable_t		gameCvarTable[] = {
 	{ &g_timeouttospec, "g_timeouttospec", "70", CVAR_ARCHIVE, 0, qfalse },
 
 	//[videoP - jk2PRO - Serverside - All - CVARS - Start]
+
+	//jk2PRO SECURITY
+	{ &g_antiFakePlayer, "g_antiFakePlayer", "1", CVAR_ARCHIVE, qfalse },
+	{ &g_maxConnPerIP, "g_maxConnPerIP", "3", CVAR_ARCHIVE, qfalse },
+	{ &g_playerLog, "g_playerLog", "1", CVAR_ARCHIVE, qfalse },
 
 	//jk2PRO MOVEMENT
 	{ &g_movementStyle, "g_movementStyle", "1", CVAR_ARCHIVE, 0, qtrue },
@@ -561,6 +574,12 @@ void G_InitGame( int levelTime, int randomSeed, int restart ) {
 	} else {
 		G_Printf( "Not logging to disk.\n" );
 	}
+
+	trap_FS_FOpenFile(PLAYER_LOG, &level.playerLog, FS_APPEND_SYNC);
+	if (level.playerLog)
+		trap_Printf("Logging to "PLAYER_LOG"\n");
+	else
+		trap_Printf("WARNING: Couldn't open logfile: "PLAYER_LOG"\n");
 
 	G_LogWeaponInit();
 
@@ -2203,6 +2222,15 @@ int start, end;
 			{
 				WP_ForcePowersUpdate(ent, &ent->client->pers.cmd );
 				WP_SaberPositionUpdate(ent, &ent->client->pers.cmd);
+
+				if (ent->client->pers.stats.startTime) {
+					float xyspeed;
+
+					ent->client->pers.stats.displacement += xyspeed / sv_fps.value;
+					ent->client->pers.stats.displacementSamples++;
+					if (xyspeed > ent->client->pers.stats.topSpeed)
+						ent->client->pers.stats.topSpeed = xyspeed; //uhh, round?           
+				}	
 			}
 			G_RunClient( ent );
 			continue;

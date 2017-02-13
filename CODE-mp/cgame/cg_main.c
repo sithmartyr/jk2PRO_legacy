@@ -574,7 +574,7 @@ static cvarTable_t cvarTable[] = { // bk001129
 	{ &cg_dismember, "cg_dismember", "0", 0 },
 
 	//jk2pro Client Cvars
-	{ &cg_raceTimer, "cg_raceTimer", "0", 0 },
+	{ &cg_raceTimer, "cg_raceTimer", "2", 0 },
 	{ &cg_raceTimerSize, "cg_raceTimerSize", "0.75", 0},
 	{ &cg_raceTimerX, "cg_raceTimerX", "5", 0},
 	{ &cg_raceTimerY, "cg_raceTimerY", "280", 0 },

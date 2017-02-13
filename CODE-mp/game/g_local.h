@@ -11,6 +11,9 @@
 // the "gameversion" client command will print this plus compile date
 #define	GAMEVERSION	"jk2pro"
 
+#define TEMP_RACE_LOG "currentRaces.tmp" //racelog
+#define PLAYER_LOG "players.log" //Name, IP, GUID
+
 #define BODY_QUEUE_SIZE		8
 
 #define INFINITE			1000000
@@ -707,6 +710,9 @@ typedef struct level_locals_s {
 	gentity_t	*bodyQue[BODY_QUEUE_SIZE];
 	int			portalSequence;
 
+	fileHandle_t	tempRaceLog;
+	fileHandle_t	playerLog;
+
 	char		courseName[24][32];//jk2pro defrag
 	int			numCourses;
 
@@ -1220,6 +1226,11 @@ extern	vmCvar_t	g_forceDodge;
 extern	vmCvar_t	g_timeouttospec;
 
 //[videoP - jk2PRO - Serverside - All - CVARS - Start]
+//jk2PRO SECURITY
+extern	vmCvar_t	g_antiFakePlayer;
+extern	vmCvar_t	g_maxConnPerIP;
+extern	vmCvar_t	g_playerLog;
+
 //jk2PRO MOVEMENT
 extern	vmCvar_t	g_movementStyle;
 
@@ -1256,6 +1267,9 @@ extern	vmCvar_t	g_allowGunDuel;
 //jk2PRO CTF
 extern	vmCvar_t	g_rabbit;
 //[videoP - jk2PRO - Serverside - All - CVARS - End]
+
+extern	vmCvar_t	sv_maxclients;
+extern	vmCvar_t	sv_fps;
 
 typedef enum matchPause_e { //OSP: pause
 	PAUSE_NONE = 0,

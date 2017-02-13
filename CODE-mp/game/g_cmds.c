@@ -1375,9 +1375,14 @@ static void G_SayTo( gentity_t *ent, gentity_t *other, int mode, int color, cons
 	if ( other->client->pers.connected != CON_CONNECTED ) {
 		return;
 	}
-	if ( mode == SAY_TEAM  && !OnSameTeam(ent, other) ) {
+	/*if ( mode == SAY_TEAM  && !OnSameTeam(ent, other) ) {
+		return;
+	}*/
+
+	if (mode == SAY_TEAM && ((level.gametype >= GT_TEAM && !OnSameTeam(ent, other)) || (level.gametype < GT_TEAM && (ent->client->sess.sessionTeam != other->client->sess.sessionTeam)))) {
 		return;
 	}
+
 	// no chatting to players in tournements
 	if ( (g_gametype.integer == GT_TOURNAMENT )
 		&& other->client->sess.sessionTeam == TEAM_FREE
@@ -3444,10 +3449,60 @@ void Cmd_Aminfo_f(gentity_t *ent)
 	if (!ent || !ent->client)
 		return;
 
-	//Q_strncpyz(buf, va("^5 Hi there, %s^5.  This server is using the jk2PRO mod.\n", ent->client->pers.netname), sizeof(buf));
-	trap_SendServerCommand(ent->client->ps.clientNum, va("print \"^5 Hi there, %s^5.  This server is using the jk2PRO mod.\n\n\"", ent->client->pers.netname));
-	trap_SendServerCommand(ent->client->ps.clientNum, va("print \"^3Have you tried out Full Force Duel Mode yet? Use /engage_fullforceduel while looking at your opponent\n\""));
-	trap_SendServerCommand(ent->client->ps.clientNum, va("print \"^3to challenge them to a FF duel.  Also try out /engage_gunduel! You can even bind these commands!\n\""));
+	Q_strncpyz(buf, va("^5 Hi there, %s^5.  This server is using the jk2PRO mod.\n", ent->client->pers.netname), sizeof(buf));
+	trap_SendServerCommand(ent - g_entities, va("print \"%s\n\"", buf));
+
+	Q_strncpyz(buf, "   ^3Game commands: ", sizeof(buf));
+	if (g_privateDuel.integer) {
+		Q_strcat(buf, sizeof(buf), "engage_FullForceDuel ");
+		Q_strcat(buf, sizeof(buf), "engage_gunDuel ");
+	}
+	trap_SendServerCommand(ent - g_entities, va("print \"%s\n\"", buf));
+
+	if (g_raceMode.integer) {
+		Q_strncpyz(buf, "   ^3Defrag commands: ", sizeof(buf));
+		if (g_raceMode.integer > 1 && level.gametype == GT_FFA)
+			Q_strcat(buf, sizeof(buf), "race ");
+		if (level.gametype == GT_FFA) {
+			Q_strcat(buf, sizeof(buf), "jump ");
+			Q_strcat(buf, sizeof(buf), "move ");
+			if (g_allowRaceTele.integer) {
+				Q_strcat(buf, sizeof(buf), "amTele ");
+				Q_strcat(buf, sizeof(buf), "amTelemark ");
+				if (g_allowRaceTele.integer > 1)
+					Q_strcat(buf, sizeof(buf), "noclip ");
+			}
+		}
+		trap_SendServerCommand(ent - g_entities, va("print \"%s\n\"", buf));
+
+		Q_strncpyz(buf, "   ^3Admin commands: ", sizeof(buf));
+		if (!(ent->client->sess.fullAdmin) && !(ent->client->sess.juniorAdmin))
+			Q_strcat(buf, sizeof(buf), "You are not an administrator on this server.\n");
+		else {
+			if ((ent->client->sess.fullAdmin) && (g_fullAdminLevel.integer & (1 << A_ADMINTELE)))
+				Q_strcat(buf, sizeof(buf), "amTele ");
+			else if ((ent->client->sess.juniorAdmin) && (g_juniorAdminLevel.integer & (1 << A_ADMINTELE)))
+				Q_strcat(buf, sizeof(buf), "amTele ");
+			if ((ent->client->sess.fullAdmin) && (g_fullAdminLevel.integer & (1 << A_TELEMARK)))
+				Q_strcat(buf, sizeof(buf), "amTeleMark ");
+			else if ((ent->client->sess.juniorAdmin) && (g_juniorAdminLevel.integer & (1 << A_TELEMARK)))
+				Q_strcat(buf, sizeof(buf), "amTeleMark ");
+			if ((ent->client->sess.fullAdmin) && (g_fullAdminLevel.integer & (1 << A_KILLVOTE)))
+				Q_strcat(buf, sizeof(buf), "amKillVote ");
+			else if ((ent->client->sess.juniorAdmin) && (g_juniorAdminLevel.integer & (1 << A_KILLVOTE)))
+				Q_strcat(buf, sizeof(buf), "amKillVote ");
+			if ((ent->client->sess.fullAdmin) && (g_fullAdminLevel.integer & (1 << A_NOCLIP)))
+				Q_strcat(buf, sizeof(buf), "Noclip ");
+			else if ((ent->client->sess.juniorAdmin) && (g_juniorAdminLevel.integer & (1 << A_NOCLIP)))
+				Q_strcat(buf, sizeof(buf), "Noclip ");
+			if ((ent->client->sess.fullAdmin) && (g_fullAdminLevel.integer & (1 << A_LISTMAPS)))
+				Q_strcat(buf, sizeof(buf), "amListMaps ");
+			else if ((ent->client->sess.juniorAdmin) && (g_juniorAdminLevel.integer & (1 << A_LISTMAPS)))
+				Q_strcat(buf, sizeof(buf), "amListMaps ");
+			trap_SendServerCommand(ent - g_entities, va("print \"%s\n\"", buf));
+			buf[0] = '\0';
+		}
+	}
 	return;
 }
 //[videoP - jk2PRO - Serverside - All - Aminfo Function - End]
@@ -4116,6 +4171,21 @@ void ClientCommand( int clientNum ) {
 		return;
 	}
 
+	if (Q_stricmp(cmd, "register") == 0) {
+		Cmd_ACRegister_f(ent);
+		return;
+	}
+
+	if (Q_stricmp(cmd, "login") == 0) {
+		Cmd_ACLogin_f(ent);
+		return;
+	}
+
+	if (Q_stricmp(cmd, "logout") == 0) {
+		Cmd_ACLogout_f(ent);
+		return;
+	}
+
 	//rww - redirect bot commands
 	if (strstr(cmd, "bot_") && AcceptBotCommand(cmd, ent))
 	{
@@ -4378,3 +4448,8 @@ void ClientCommand( int clientNum ) {
 		}
 	}
 }
+
+
+void Cmd_ACLogin_f(gentity_t *ent);
+void Cmd_ACLogout_f(gentity_t *ent);
+void Cmd_ACRegister_f(gentity_t *ent);

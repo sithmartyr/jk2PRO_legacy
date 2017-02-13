@@ -21,6 +21,8 @@
 
 int dueltypes[MAX_CLIENTS];//jk2PRO - Serverside - Fullforce Duels
 
+vmCvar_t	sv_fps;
+
 //rww - not putting @ in front of these because
 //we don't need them in a cgame striped lookup.
 //Let me know if this causes problems, pat.
@@ -2209,7 +2211,7 @@ void BG_PlayerStateToEntityStateExtraPolate( playerState_t *ps, entityState_t *s
 	// set the time for linear prediction
 	s->pos.trTime = time;
 	// set maximum extra polation time
-	s->pos.trDuration = 50; // 1000 / sv_fps (default = 20)
+	s->pos.trDuration = 1000 / sv_fps.value;
 
 	s->apos.trType = TR_INTERPOLATE;
 	VectorCopy( ps->viewangles, s->apos.trBase );

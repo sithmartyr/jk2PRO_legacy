@@ -129,7 +129,7 @@ and whenever the server updates any serverinfo flagged cvars
 */
 void CG_ParseServerinfo( void ) {
 	const char	*info;
-	char	*mapname;
+	char	*mapname, *gamename;
 
 	info = CG_ConfigString( CS_SERVERINFO );
 	cgs.gametype = atoi( Info_ValueForKey( info, "g_gametype" ) );
@@ -142,6 +142,12 @@ void CG_ParseServerinfo( void ) {
 	cgs.timelimit = atoi( Info_ValueForKey( info, "timelimit" ) );
 	cgs.maxclients = atoi( Info_ValueForKey( info, "sv_maxclients" ) );
 	mapname = Info_ValueForKey( info, "mapname" );
+
+	gamename = Info_ValueForKey(info, "gamename");
+	if (!Q_stricmpn(gamename, "jk2pro", 6)) {
+		cg.jk2pro.detected = qtrue;
+		CG_Printf("jk2PRO demo detected\n");
+	}
 
 	//rww - You must do this one here, Info_ValueForKey always uses the same memory pointer.
 	trap_Cvar_Set ( "ui_about_mapname", mapname );

@@ -15,7 +15,7 @@ The primary goals for this mod are as follows:
 * To add support for a race gametype, similar to racesow in warsow or defrag in quake 3, with player isolation, accounts, & persistent highscores.
 * To enhance the default features & to improve them as needed.  
 
-All features will be able to be configured, so that no gameplay changes will interfere with default JKO settings.
+All features will be able to be configured, so that no gameplay changes will interfere with default JK2 settings.
 
 ## Compiling
 Use the batch files (cgame.bat, game.bat, etc.) in each module's proper directory to compile the Quake Virtual Machines (*.qvm).

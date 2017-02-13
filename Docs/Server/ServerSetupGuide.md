@@ -28,6 +28,7 @@ If Linux yells at you with something like this
 	./jk2mvded: Permission denied
 
 Then you will most likely need to give your binary file permission to be executed.  Run this command below:
+#### 	
 	sudo chmod +x ./jk2mvded 
 	
 That's it! Hopefully after following this guide, you should have a running jk2PRO server!  Good luck & enjoy!

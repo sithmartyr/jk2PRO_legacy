@@ -509,7 +509,7 @@ void TimerStop(gentity_t *trigger, gentity_t *player, trace_t *trace) {//JK2PRO 
 		//average = floorf(player->client->pers.stats.displacement / ((level.time - player->client->pers.stats.startLevelTime) * 0.001f)) + 0.5f;//Should use level time for this 
 		if (player->client->pers.stats.displacementSamples)
 			//I'm making this 20 for the sake of testing.  I will fix this later when I ask loda wtf to do bout this.
-			average = floorf(((player->client->pers.stats.displacement * /*sv_fps.value*/ 20.0) / player->client->pers.stats.displacementSamples) + 0.5f);
+			average = floorf(((player->client->pers.stats.displacement * sv_fps.value) / player->client->pers.stats.displacementSamples) + 0.5f);
 		else
 			average = player->client->pers.stats.topSpeed;
 
@@ -648,7 +648,7 @@ void TimerCheckpoint(gentity_t *trigger, gentity_t *player, trace_t *trace) {//J
 		//const int average = floorf(player->client->pers.stats.displacement / ((level.time - player->client->pers.stats.startLevelTime) * 0.001f)) + 0.5f; //Could this be more accurate?
 		if (player->client->pers.stats.displacementSamples)
 			//I'm changing this to 20 just for testing sakes.  I will change it back later when I ask loda wtf to do bout this.
-			average = floorf(((player->client->pers.stats.displacement * /*sv_fps.value*/ 20.0) / player->client->pers.stats.displacementSamples) + 0.5f);
+			average = floorf(((player->client->pers.stats.displacement * sv_fps.value) / player->client->pers.stats.displacementSamples) + 0.5f);
 		else
 			average = player->client->pers.stats.topSpeed;
 

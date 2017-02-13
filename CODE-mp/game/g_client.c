@@ -8,6 +8,8 @@
 static vec3_t	playerMins = {-15, -15, DEFAULT_MINS_2};
 static vec3_t	playerMaxs = {15, 15, DEFAULT_MAXS_2};
 
+void G_AddPlayerLog(char *name, char *ip);
+
 forcedata_t Client_Force[MAX_CLIENTS];
 
 /*QUAKED info_player_deathmatch (1 0 1) (-16 -16 -24) (16 16 32) initial
@@ -1363,13 +1365,28 @@ to the server machine, but qfalse on map changes and tournement
 restarts.
 ============
 */
+static qboolean CompareIPs(const char *ip1, const char *ip2)
+{
+	while (1) {
+		if (*ip1 != *ip2)
+			return qfalse;
+		if (!*ip1 || *ip1 == ':')
+			break;
+		ip1++;
+		ip2++;
+	}
+
+	return qtrue;
+}
+
 char *ClientConnect( int clientNum, qboolean firstTime, qboolean isBot ) {
-	char		*value;
+	char		*value = NULL;
 //	char		*areabits;
 	gclient_t	*client;
-	char		userinfo[MAX_INFO_STRING];
-	gentity_t	*ent;
-	gentity_t	*te;
+	char		userinfo[MAX_INFO_STRING] = { 0 };
+	char		tmpIP[NET_ADDRSTRMAXLEN] = { 0 };
+	gentity_t	*ent = NULL;
+	gentity_t	*te = NULL;
 
 	ent = &g_entities[ clientNum ];
 
@@ -1377,6 +1394,7 @@ char *ClientConnect( int clientNum, qboolean firstTime, qboolean isBot ) {
 
 	// check to see if they are on the banned IP list
 	value = Info_ValueForKey (userinfo, "ip");
+	Q_strncpyz(tmpIP, isBot ? "Bot" : value, sizeof(tmpIP));
 	if ( G_FilterPacket( value ) ) {
 		return "Banned.";
 	}
@@ -1389,6 +1407,36 @@ char *ClientConnect( int clientNum, qboolean firstTime, qboolean isBot ) {
 			return "Invalid password";
 		}
 	}
+
+	if (!isBot && firstTime)
+	{
+		if (g_antiFakePlayer.integer)
+		{
+			int count = 0, i = 0;
+			char strIP[NET_ADDRSTRMAXLEN] = { 0 };
+			char *p = NULL;
+
+			Q_strncpyz(strIP, tmpIP, sizeof(strIP));
+			p = strchr(strIP, ':');
+			if (p)
+				*p = 0;
+
+			for (i = 0; i < sv_maxclients.integer; i++) {
+				if (CompareIPs(strIP, level.clients[i].sess.IP))
+					count++;
+			}
+			if (count > g_maxConnPerIP.integer) {
+				return "Too many connections from the same IP";
+			}
+		}
+	}
+
+	if (ent->inuse) {
+		G_LogPrintf("Forcing disconnect on active client: %i\n", clientNum);
+		ClientDisconnect(clientNum);
+	}
+
+	ent->r.svFlags &= ~SVF_SINGLECLIENT;
 
 	// they can connect
 	ent->client = level.clients + clientNum;
@@ -1414,9 +1462,27 @@ char *ClientConnect( int clientNum, qboolean firstTime, qboolean isBot ) {
 		}
 	}
 
+	if (!isBot && firstTime)
+	{
+		if (!tmpIP[0])
+		{//No IP sent when connecting, probably an unban hack attempt
+			client->pers.connected = CON_DISCONNECTED;
+			//G_SecurityLogPrintf("Client %i (%s) sent no IP when connecting.\n", clientNum, client->pers.netname);
+			return "Invalid userinfo detected";
+		}
+	}
+	
+
 	// get and distribute relevent paramters
 	G_LogPrintf( "ClientConnect: %i\n", clientNum );
 	ClientUserinfoChanged( clientNum );
+
+	Q_strncpyz(client->sess.IP, tmpIP, sizeof(client->sess.IP)); //always do this i guess? might solve issue of blank IP strings..
+	if (firstTime) {//loda fixme
+					//Q_strncpyz( client->sess.IP, tmpIP, sizeof( client->sess.IP ) );
+		if (g_playerLog.integer && ent && ent->client && !isBot)
+			G_AddPlayerLog(client->pers.netname, client->sess.IP);
+	}
 
 	// don't do the "xxx connected" messages if they were caried over from previous level
 	if ( firstTime ) {
@@ -1607,8 +1673,11 @@ void ClientBegin( int clientNum, qboolean allowTeamReset ) {
 			trap_SendServerCommand(ent - g_entities, va("print \"%s\n\"", g_consoleMOTD.string));
 
 		if (Q_stricmp(g_centerMOTD.string, "")) {
-			strcpy(ent->client->csMessage, G_NewString(va("^7%s\n", g_centerMOTD.string)));
-			ent->client->csTimeLeft = g_centerMOTDTime.integer;
+			if (g_gametype.integer == GT_FFA) 
+			{
+				strcpy(ent->client->csMessage, G_NewString(va("^7%s\n", g_centerMOTD.string)));
+				ent->client->csTimeLeft = g_centerMOTDTime.integer;
+			}
 		}
 
 		if (g_gametype.integer != GT_TOURNAMENT) {

@@ -84,7 +84,7 @@ float	FloatSwap (const float *f);
 #define	MAC_STATIC
 
 #undef QDECL
-#define	QDECL	__cdecl
+#define	QDECL	_QDECL
 
 // buildstring will be incorporated into the version string
 #ifdef NDEBUG
@@ -119,7 +119,7 @@ static ID_INLINE float BigFloat(const float *l) { FloatSwap(l); }
 #if defined(MACOS_X)
 
 #define MAC_STATIC
-#define __cdecl
+#define _QDECL
 #define __declspec(x)
 #define stricmp strcasecmp
 #define ID_INLINE inline 
