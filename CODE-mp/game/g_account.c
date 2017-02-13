@@ -356,7 +356,7 @@ void Cmd_ACRegister_f(gentity_t *ent) {
 		//Com_sprintf(account, sizeof(account), "{ \"Username: %s\", \"Password: %s\", \"IP: %s\" },\n", username, password, strIP);
 		Com_sprintf(account, sizeof(account), "%s %s %s\n", username, password, strIP);
 
-	trap_FS_FOpenFile(LOCAL_ACCT_PATH, &f, FS_APPEND);
+	trap_FS_FOpenFile(LOCAL_ACCT_PATH, &f, FS_APPEND_SYNC);
 	trap_FS_Write(account, strlen(account), f);
 	trap_FS_FCloseFile(f);
 }
