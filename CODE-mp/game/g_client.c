@@ -1673,11 +1673,8 @@ void ClientBegin( int clientNum, qboolean allowTeamReset ) {
 			trap_SendServerCommand(ent - g_entities, va("print \"%s\n\"", g_consoleMOTD.string));
 
 		if (Q_stricmp(g_centerMOTD.string, "")) {
-			if (g_gametype.integer == GT_FFA) 
-			{
-				strcpy(ent->client->csMessage, G_NewString(va("^7%s\n", g_centerMOTD.string)));
-				ent->client->csTimeLeft = g_centerMOTDTime.integer;
-			}
+			strcpy(ent->client->csMessage, G_NewString(va("^7%s\n", g_centerMOTD.string)));
+			ent->client->csTimeLeft = g_centerMOTDTime.integer;
 		}
 
 		if (g_gametype.integer != GT_TOURNAMENT) {
