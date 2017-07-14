@@ -1230,6 +1230,7 @@ extern	vmCvar_t	g_timeouttospec;
 extern	vmCvar_t	g_antiFakePlayer;
 extern	vmCvar_t	g_maxConnPerIP;
 extern	vmCvar_t	g_playerLog;
+extern	vmCvar_t	g_fixHighFPSAbuse;
 
 //jk2PRO MOVEMENT
 extern	vmCvar_t	g_movementStyle;

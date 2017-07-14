@@ -4,9 +4,26 @@
 #define LOCAL_ACCT_PATH "accts.jks"
 #define MAX_TMP_LOG_SIZE 80 * 1024
 
-double floorf(double x) {
+float floorf(float x) {
+	if (x < 0.0)
+	{
+		x -= 1;
+		return (int)x;
+	}
 	return (int)x;
 }
+
+float ceilf(float x) {
+	if (x > 0.0)
+	{
+		x += 1;
+		return (int)x;
+	}
+	return (int)x;
+}
+
+
+
 
 unsigned int ip_to_int(const char * ip) {
 	unsigned v = 0;

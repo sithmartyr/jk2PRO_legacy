@@ -6,9 +6,20 @@
 #include "q_shared.h"
 #include "bg_public.h"
 #include "bg_local.h"
+
+#ifndef CGAME
 #include "g_local.h"
+#endif
 
+#ifdef UI_EXPORTS
+#include "../ui/ui_local.h"
+#endif
 
+#ifndef UI_EXPORTS
+#ifdef CGAME
+#include "../cgame/cg_local.h"
+#endif
+#endif
 
 #define MAX_WEAPON_CHARGE_TIME 5000
 
@@ -151,7 +162,7 @@ int PM_GetMovePhysics(void)
 {
 	if (!pm || !pm->ps)
 	return 1;
-#ifdef QAGAME
+#ifndef CGAME
 	if (pm->ps->stats[STAT_RACEMODE])
 	{
 		return (pm->ps->stats[STAT_MOVEMENTSTYLE]);
@@ -163,21 +174,8 @@ int PM_GetMovePhysics(void)
 	else if (g_movementStyle.integer > 8)
 		return 8;
 #else
-	//if (!cgs.isJAPro)
-		//return 1;
 	return pm->ps->stats[STAT_MOVEMENTSTYLE];
-	/*
-	else if (pm->ps->stats[STAT_RACEMODE])
-	return (pm->ps->stats[STAT_MOVEMENTSTYLE]);
-	else if (cgs.jcinfo & JAPRO_CINFO_CPM)
-	return 3;
-	else if (cgs.jcinfo & JAPRO_CINFO_HL2)
-	return 2;
-	else if (cgs.jcinfo & JAPRO_CINFO_NOSTRAFE)
-	return 0;
-	*/
 #endif
-	return 1;
 }
 
 int PM_GetSaberStance(void)
@@ -286,7 +284,7 @@ static void PM_Friction( void ) {
 	vec3_t	vec;
 	float	*vel;
 	float	speed, newspeed, control;
-	float	drop;
+	float	drop, realfriction = pm_friction;
 	
 	vel = pm->ps->velocity;
 	
@@ -305,13 +303,17 @@ static void PM_Friction( void ) {
 
 	drop = 0;
 
+	if (PM_GetMovePhysics() == 3 || PM_GetMovePhysics() == 6 || PM_GetMovePhysics() == 8)
+		realfriction = 8.0f;
+
 	// apply ground friction
 	if ( pm->waterlevel <= 1 ) {
 		if ( pml.walking && !(pml.groundTrace.surfaceFlags & SURF_SLICK) ) {
 			// if getting knocked back, no friction
 			if ( ! (pm->ps->pm_flags & PMF_TIME_KNOCKBACK) ) {
 				control = speed < pm_stopspeed ? pm_stopspeed : speed;
-				drop += control*pm_friction*pml.frametime;
+				//drop += control*pm_friction*pml.frametime;
+				drop += control*realfriction*pml.frametime;
 			}
 		}
 	}
@@ -380,42 +382,45 @@ Handles user intended acceleration
 ==============
 */
 static void PM_Accelerate( vec3_t wishdir, float wishspeed, float accel ) {
-#if 1
-	// q2 style
-	int			i;
-	float		addspeed, accelspeed, currentspeed;
 
-	currentspeed = DotProduct (pm->ps->velocity, wishdir);
-	addspeed = wishspeed - currentspeed;
-	if (addspeed <= 0) {
-		return;
-	}
-	accelspeed = accel*pml.frametime*wishspeed;
-	if (accelspeed > addspeed) {
-		accelspeed = addspeed;
-	}
-	
-	for (i=0 ; i<3 ; i++) {
-		pm->ps->velocity[i] += accelspeed*wishdir[i];	
-	}
-#else
-	// proper way (avoids strafe jump maxspeed bug), but feels bad
-	vec3_t		wishVelocity;
-	vec3_t		pushDir;
-	float		pushLen;
-	float		canPush;
+	if ((PM_GetMovePhysics() != 0) || pm->ps->clientNum >= MAX_CLIENTS || pm->ps->pm_type != PM_NORMAL)
+	{ //standard method, allows "bunnyhopping" and whatnot
+		int			i;
+		float		addspeed, accelspeed, currentspeed;
 
-	VectorScale( wishdir, wishspeed, wishVelocity );
-	VectorSubtract( wishVelocity, pm->ps->velocity, pushDir );
-	pushLen = VectorNormalize( pushDir );
+		currentspeed = DotProduct(pm->ps->velocity, wishdir);
+		addspeed = wishspeed - currentspeed;
+		if (addspeed <= 0) {
+			return;
+		}
 
-	canPush = accel*pml.frametime*wishspeed;
-	if (canPush > pushLen) {
-		canPush = pushLen;
+		accelspeed = accel*pml.frametime*wishspeed;
+		if (accelspeed > addspeed) {
+			accelspeed = addspeed;
+		}
+
+		for (i = 0; i < 3; i++) {
+			pm->ps->velocity[i] += accelspeed*wishdir[i];
+		}
 	}
+	else
+	{// proper way (avoids strafe jump maxspeed bug), but feels bad
+		vec3_t		wishVelocity;
+		vec3_t		pushDir;
+		float		pushLen;
+		float		canPush;
 
-	VectorMA( pm->ps->velocity, canPush, pushDir, pm->ps->velocity );
-#endif
+		VectorScale(wishdir, wishspeed, wishVelocity);
+		VectorSubtract(wishVelocity, pm->ps->velocity, pushDir);
+		pushLen = VectorNormalize(pushDir);
+
+		canPush = accel*pml.frametime*wishspeed;
+		if (canPush > pushLen) {
+			canPush = pushLen;
+		}
+
+		VectorMA(pm->ps->velocity, canPush, pushDir, pm->ps->velocity);
+	}
 }
 
 void CPM_PM_Aircontrol(pmove_t *pm, vec3_t wishdir, float wishspeed)
@@ -940,16 +945,19 @@ static qboolean PM_CheckJump( void )
 					//need to scale this down, start with height velocity (based on max force jump height) and scale down to regular jump vel
 					pm->ps->velocity[2] = (forceJumpHeight[pm->ps->fd.forcePowerLevel[FP_LEVITATION]]-curHeight)/forceJumpHeight[pm->ps->fd.forcePowerLevel[FP_LEVITATION]]*forceJumpStrength[pm->ps->fd.forcePowerLevel[FP_LEVITATION]];//JUMP_VELOCITY;
 					pm->ps->velocity[2] /= 10;
-					pm->ps->velocity[2] += JUMP_VELOCITY;
+					if (PM_GetMovePhysics() == 2)
+						pm->ps->velocity[2] += pm->ps->stats[STAT_LASTJUMPSPEED];
+					else
+						pm->ps->velocity[2] += JUMP_VELOCITY;
 					pm->ps->pm_flags |= PMF_JUMP_HELD;
 				}
-				else if ( curHeight > forceJumpHeight[0] && curHeight < forceJumpHeight[pm->ps->fd.forcePowerLevel[FP_LEVITATION]] - forceJumpHeight[0] )
+				/*else if ( curHeight > forceJumpHeight[0] && curHeight < forceJumpHeight[pm->ps->fd.forcePowerLevel[FP_LEVITATION]] - forceJumpHeight[0] )
 				{//still have some headroom, don't totally stop it
 					if ( pm->ps->velocity[2] > JUMP_VELOCITY )
 					{
 						pm->ps->velocity[2] = JUMP_VELOCITY;
 					}
-				}
+				}*/
 				else
 				{
 					//pm->ps->velocity[2] = 0;
@@ -957,11 +965,31 @@ static qboolean PM_CheckJump( void )
 
 					if ( pm->ps->velocity[2] > JUMP_VELOCITY )
 					{
-						pm->ps->velocity[2] = JUMP_VELOCITY;
+						if (PM_GetMovePhysics() != 2)
+							pm->ps->velocity[2] = JUMP_VELOCITY;
 					}
 				}
-				pm->cmd.upmove = 0;
-				return qfalse;
+				if (PM_GetMovePhysics() != 2 && PM_GetMovePhysics() != 3 && PM_GetMovePhysics() != 4 && PM_GetMovePhysics() != 6 && PM_GetMovePhysics() != 7 && PM_GetMovePhysics() != 8) {
+#if !defined(CGAME) && !defined(UI_EXPORTS)
+					gclient_t *client = NULL;
+					{
+						{
+							int clientNum = pm->ps->clientNum;
+							if (0 <= clientNum && clientNum < MAX_CLIENTS) {
+								client = g_entities[clientNum].client;
+							}
+						}
+					}
+
+					if (client && client->pers.practice && client->sess.raceMode) {
+					}
+					else
+#endif
+					{
+						pm->cmd.upmove = 0; // change this to allow hold to jump?
+						return qfalse;
+					}
+				}
 			}
 			else if ( pm->ps->groundEntityNum == ENTITYNUM_NONE )
 			{
@@ -985,8 +1013,29 @@ static qboolean PM_CheckJump( void )
 	if ( pm->ps->pm_flags & PMF_JUMP_HELD ) 
 	{
 		// clear upmove so cmdscale doesn't lower running speed
-		pm->cmd.upmove = 0;
-		return qfalse;
+		if (PM_GetMovePhysics() != 2 && PM_GetMovePhysics() != 3 && PM_GetMovePhysics() != 4 && PM_GetMovePhysics() != 6 && PM_GetMovePhysics() != 7 && PM_GetMovePhysics() != 8)
+		{
+#if !defined(CGAME) && !defined(UI_EXPORTS)
+			gclient_t *client = NULL;
+			{
+				{
+					int clientNum = pm->ps->clientNum;
+					if (0 <= clientNum && clientNum < MAX_CLIENTS) {
+						client = g_entities[clientNum].client;
+					}
+				}
+			}
+
+			if (client && client->pers.practice && client->sess.raceMode) {
+			}
+			else
+#endif
+			{
+				pm->cmd.upmove = 0;
+				return qfalse;
+			}
+		}
+		//hold to jump?
 	}
 
 	if ( pm->ps->gravity <= 0 )
@@ -1012,6 +1061,11 @@ static qboolean PM_CheckJump( void )
 		WP_ForcePowerAvailable( pm->gent, FP_LEVITATION, 0 ) */ &&
 		pm->ps->weapon == WP_SABER &&
 		!BG_HasYsalamiri(pm->gametype, pm->ps) &&
+		(PM_GetMovePhysics() != 3) &&
+		(PM_GetMovePhysics() != 4) &&
+		(PM_GetMovePhysics() != 6) &&
+		(PM_GetMovePhysics() != 7) &&
+		(PM_GetMovePhysics() != 8) &&
 		BG_CanUseFPNow(pm->gametype, pm->ps, pm->cmd.serverTime, FP_LEVITATION)
 		 )
 	{
@@ -1347,8 +1401,10 @@ static qboolean PM_CheckJump( void )
 	{
 		return qfalse;
 	}
-	if ( pm->cmd.upmove > 0 )
+	if (pm->cmd.upmove > 0)
 	{//no special jumps
+		float realjumpvelocity = JUMP_VELOCITY;
+
 		/*
 		gentity_t *groundEnt = &g_entities[pm->ps->groundEntityNum];
 		if ( groundEnt && groundEnt->NPC )
@@ -1357,9 +1413,47 @@ static qboolean PM_CheckJump( void )
 		}
 		*/
 
-		pm->ps->velocity[2] = JUMP_VELOCITY;
-		pm->ps->fd.forceJumpZStart = pm->ps->origin[2];//so we don't take damage if we land at same height
-		pm->ps->pm_flags |= PMF_JUMP_HELD;//PMF_JUMPING;
+		if ((PM_GetMovePhysics() == 2) || (PM_GetMovePhysics() == 3) || (PM_GetMovePhysics() == 4) || (PM_GetMovePhysics() == 6) || (PM_GetMovePhysics() == 7) || (PM_GetMovePhysics() == 8))
+		{
+			vec3_t hVel;
+			float added, xyspeed;
+
+			//pm->ps->velocity[2] = JUMP_VELOCITY;
+			//pm->ps->fd.forceJumpZStart = pm->ps->origin[2];//so we don't take damage if we land at same height
+			//pm->ps->pm_flags |= PMF_JUMP_HELD;//PMF_JUMPING;
+
+			if (PM_GetMovePhysics() == 6)
+				realjumpvelocity = 280.0f;
+			else realjumpvelocity = 270.0f;
+
+			hVel[0] = pm->ps->velocity[0];
+			hVel[1] = pm->ps->velocity[1];
+			hVel[2] = 0;
+			xyspeed = sqrt(hVel[0] * hVel[0] + hVel[1] * hVel[1]);
+			added = -DotProduct(hVel, pml.groundTrace.plane.normal);
+			pm->ps->velocity[2] = realjumpvelocity;
+
+			if (added > (xyspeed * 0.5))
+				added = (xyspeed * 0.5);//Sad sanity check hack
+
+			if (added > 0) {
+			
+				if ((PM_GetMovePhysics() == 6))
+					pm->ps->velocity[2] += (added * 0.75f);//Make rampjump weaker for wsw since no speedloss
+				else
+					pm->ps->velocity[2] += (added * 1.25f); //Make rampjump stronger
+			}
+			else if (pm->ps->stats[STAT_JUMPTIME] > 0) { //DOUBLEJUMP DOUBLE JUMP
+				pm->ps->velocity[2] += 100.0f;
+				pm->ps->pm_flags &= ~PMF_JUMP_HELD;
+			}
+
+			pm->ps->stats[STAT_JUMPTIME] = 401; //The fuck? Great to know
+			pm->ps->stats[STAT_LASTJUMPSPEED] = pm->ps->velocity[2];
+
+		}
+		else
+			pm->ps->velocity[2] = realjumpvelocity;
 	}
 
 	//Jumping
@@ -1684,7 +1778,7 @@ static void PM_WalkMove( void ) {
 	float		scale;
 	usercmd_t	cmd;
 	float		accelerate;
-	float		vel;
+	float		vel, realaccelerate = pm_accelerate, realduckscale = pm_duckScale;
 	float		totalVel;
 
 	if (pm->ps->velocity[0] < 0)
@@ -1728,6 +1822,15 @@ static void PM_WalkMove( void ) {
 			}
 			return;
 		}
+	}
+
+	if (PM_GetMovePhysics() == 3 || PM_GetMovePhysics() == 8)
+		realaccelerate = 15.0f;
+	else if (PM_GetMovePhysics() == 4 || PM_GetMovePhysics() == 7)
+		realduckscale = 0.25f;
+	else if (PM_GetMovePhysics() == 6) {
+		realaccelerate = 12.0f;
+		realduckscale = 0.3125f;
 	}
 
 	PM_Friction ();
@@ -1954,6 +2057,11 @@ static int PM_TryRoll( void )
 	}
 
 	if (pm->ps->weapon != WP_SABER || BG_HasYsalamiri(pm->gametype, pm->ps) ||
+		(PM_GetMovePhysics() == 3) ||
+		(PM_GetMovePhysics() == 4) ||
+		(PM_GetMovePhysics() == 6) ||
+		(PM_GetMovePhysics() == 7) ||
+		(PM_GetMovePhysics() == 8) ||
 		!BG_CanUseFPNow(pm->gametype, pm->ps, pm->cmd.serverTime, FP_LEVITATION))
 	{
 		return 0;
@@ -2219,6 +2327,11 @@ static void PM_CrashLand( void ) {
 	// make sure velocity resets so we don't bounce back up again in case we miss the clear elsewhere
 	pm->ps->velocity[2] = 0;
 
+	if (((PM_GetMovePhysics() == 3) || (PM_GetMovePhysics() == 4) || (PM_GetMovePhysics() == 7) || (PM_GetMovePhysics() == 8)) && ((int)pm->ps->fd.forceJumpZStart > pm->ps->origin[2] + 1)) {
+		if (1 > (sqrt(pm->ps->velocity[0] * pm->ps->velocity[0] + pm->ps->velocity[1] * pm->ps->velocity[1])))//No xyvel
+			pm->ps->velocity[2] = -vel; //OVERBOUNCE OVER BOUNCE
+	}
+
 	// start footstep cycle over
 	pm->ps->bobCycle = 0;
 }
@@ -2436,6 +2549,41 @@ static void PM_GroundTrace( void ) {
 		// just hit the ground
 		if ( pm->debugLevel ) {
 			Com_Printf("%i:Land\n", c_pmove);
+		}
+
+		//When we land, if our Z velocity is unusually low, its probably going to result in a nospeeded ramp
+		//If we compare our previous z velocity to our current z velocity, if they are close very, it probably messed up somehow..
+		//Since they should be very different since we just hit the ground.
+		//So if they are very close, its probably a missed ramp somehow.. so redo the clipvelocity thing here :/
+		//Ideally this could be debugged further back and fixed at the source of the problem..
+
+		//Have a pmove var "clipped" , set it to qfalse at start of every frame.
+		//When clipvelocity is called near "wsw rampjump", set clipped to qtrue.
+		//Right here, if clipped is qfalse, do a clipvelocity ?
+		//Seems like a better solution
+
+		if (trace.plane.normal[0] != 0.0f || trace.plane.normal[1] != 0.0f || trace.plane.normal[2] != 1.0f) { //Its actually a ramp
+			if (pm->ps->stats[STAT_RACEMODE] && !pml.clipped) {
+				if (pm->ps->stats[STAT_MOVEMENTSTYLE] == 6) { //Only change our xy speed if we hit a downramp in wsw
+					vec3_t oldVel, clipped_velocity, newVel;
+					float oldSpeed, newSpeed;
+
+					VectorCopy(pm->ps->velocity, oldVel);
+					oldSpeed = oldVel[0] * oldVel[0] + oldVel[1] * oldVel[1];
+
+					PM_ClipVelocity(pm->ps->velocity, trace.plane.normal, clipped_velocity, OVERCLIP); //WSW RAMPJUMP
+
+					VectorCopy(clipped_velocity, newVel);
+					newVel[2] = 0;
+					newSpeed = newVel[0] * newVel[0] + newVel[1] * newVel[1];
+
+					if (newSpeed > oldSpeed)
+						VectorCopy(clipped_velocity, pm->ps->velocity);
+				}
+				else {
+					PM_ClipVelocity(pm->ps->velocity, trace.plane.normal, pm->ps->velocity, OVERCLIP); //Not sure why wsw is acting weird here.. so i guess no speed ramps will still be a thing in wsw style :/
+				}
+			}
 		}
 		
 		PM_CrashLand();
@@ -3936,6 +4084,9 @@ static void PM_DropTimers( void ) {
 			pm->ps->torsoTimer = 0;
 		}
 	}
+
+	if (pm->ps->stats[STAT_JUMPTIME] > 0)
+		pm->ps->stats[STAT_JUMPTIME] -= pml.msec;
 }
 
 /*
@@ -4365,6 +4516,11 @@ PmoveSingle
 */
 void trap_SnapVector( float *v );
 
+static /*QINLINE*/ float bg_roundfloat(float n)
+{
+	return (n < 0.0f) ? ceil(n - 0.5f) : floor(n + 0.5f);
+}
+
 void PmoveSingle (pmove_t *pmove) {
 	pm = pmove;
 
@@ -4633,9 +4789,33 @@ void PmoveSingle (pmove_t *pmove) {
 	// entering / leaving water splashes
 	PM_WaterEvents();
 
-	// snap some parts of playerstate to save network bandwidth
-	trap_SnapVector( pm->ps->velocity );
+	//Walbug fix start, if getting stuck w/o noclip is even possible.  This should maybe be after round float? im not sure..
+	if ((pm->ps->persistant[PERS_TEAM] != TEAM_SPECTATOR) && pm->ps->stats[STAT_RACEMODE] && VectorCompare(pm->ps->origin, pml.previous_origin) && (VectorLengthSquared(pm->ps->velocity) > VectorLengthSquared(pml.previous_velocity)))
+		VectorClear(pm->ps->velocity); //Their velocity is increasing while their origin is not moving (wallbug), so prevent this..
+	//Wallbug fix end
 
+	// snap some parts of playerstate to save network bandwidth
+	//trap_SnapVector( pm->ps->velocity );
+	
+	if (pm->ps->persistant[PERS_TEAM] == TEAM_SPECTATOR) {
+		trap_SnapVector(pm->ps->velocity);
+	}
+	else {
+		if (pm->ps->stats[STAT_RACEMODE] || pm->pmove_float > 1) //japro fix racemode fps
+			pm->ps->velocity[2] = bg_roundfloat(pm->ps->velocity[2]);
+#ifndef CGAME
+		else if (g_fixHighFPSAbuse.integer && ((pml.msec < 4) || (pml.msec > 25))) { //More than 333fps, or less than 40fps.
+			//trap->SendServerCommand( -1, va("print \"333? msec: %i\n\"", pml.msec ));
+		}
+#else 
+		else if ((cgs.jcinfo & JK2PRO_CINFO_HIGHFPSFIX) && ((pml.msec < 4) || (pml.msec > 25))) {
+		}
+#endif
+		else if (!pm->pmove_float) {
+			trap_SnapVector(pm->ps->velocity); // snap velocity to integer coordinates to save network bandwidth
+		}
+	}
+	
 	if (gPMDoSlowFall)
 	{
 		pm->ps->gravity *= 2;

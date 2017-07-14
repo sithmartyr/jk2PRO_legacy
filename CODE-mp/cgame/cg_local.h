@@ -76,6 +76,10 @@
 #define TEAM_OVERLAY_MAXNAME_WIDTH	12
 #define TEAM_OVERLAY_MAXLOCATION_WIDTH	16
 
+
+//[JK2PRO - Clientside - All - Jcinfo bitvalues
+#define JK2PRO_CINFO_HIGHFPSFIX		(1<<0) //unused
+
 //#define	DEFAULT_MODEL			"kyle/default"
 //#define	DEFAULT_TEAM_MODEL		"kyle/default"
 //#define	DEFAULT_TEAM_HEAD		"kyle/default"
@@ -1364,6 +1368,8 @@ typedef struct {
 	int				redflag, blueflag;		// flag status from configstrings
 	int				flagStatus;
 
+	int				jcinfo;
+
 	qboolean  newHud;
 
 	//
@@ -1501,6 +1507,16 @@ extern	vmCvar_t		cg_speedometer;
 extern	vmCvar_t		cg_speedometerX;
 extern	vmCvar_t		cg_speedometerY;
 extern	vmCvar_t		cg_speedometerSize;
+extern	vmCvar_t		cg_strafeHelperCutoff;
+extern	vmCvar_t		cg_strafeHelper;
+extern	vmCvar_t		cg_strafeHelperPrecision;
+extern	vmCvar_t		cg_strafeHelperLineWidth;
+extern	vmCvar_t		cg_strafeHelperActiveColor;
+extern	vmCvar_t		cg_strafeHelperInactiveAlpha;
+extern  vmCvar_t		cg_crosshairRed;
+extern  vmCvar_t		cg_crosshairGreen;
+extern  vmCvar_t		cg_crosshairBlue;
+extern  vmCvar_t		cg_crosshairAlpha;
 
 extern	vmCvar_t		cg_thirdPerson;
 extern	vmCvar_t		cg_thirdPersonRange;

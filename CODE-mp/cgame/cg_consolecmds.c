@@ -384,6 +384,61 @@ static void CG_StartOrbit_f( void ) {
 	}
 }
 
+typedef struct bitInfo_S {
+	const char	*string;
+} bitInfo_T;
+
+static bitInfo_T strafeTweaks[] = {
+	{ "Original style" },//0
+	{ "Updated style" },//1
+	{ "Cgaz style" },//2
+	{ "Warsow style" },//3
+	{ "W" },//4
+	{ "WA" },//5
+	{ "WD" },//6
+	{ "A" },//7
+	{ "D" },//8
+	{ "Rear" },//9
+	{ "Center" },//10
+	{ "Line Crosshair" }//11
+};
+static const int MAX_STRAFEHELPER_TWEAKS = ARRAY_LEN(strafeTweaks);
+
+
+void CG_StrafeHelper_f(void) {
+	if (trap_Argc() == 1) {
+		int i = 0;
+		for (i = 0; i < MAX_STRAFEHELPER_TWEAKS; i++) {
+			if ((cg_strafeHelper.integer & (1 << i))) {
+				Com_Printf("%2d [X] %s\n", i, strafeTweaks[i].string);
+			}
+			else {
+				Com_Printf("%2d [ ] %s\n", i, strafeTweaks[i].string);
+			}
+		}
+		return;
+	}
+	else {
+		char arg[8] = { 0 };
+		int index;
+		const unsigned long int mask = (1 << MAX_STRAFEHELPER_TWEAKS) - 1;
+
+		trap_Argv(1, arg, sizeof(arg));
+		index = atoi(arg);
+
+		if (index < 0 || index >= MAX_STRAFEHELPER_TWEAKS) {
+			Com_Printf("strafeHelper: Invalid range: %i [0, %i]\n", index, MAX_STRAFEHELPER_TWEAKS - 1);
+			return;
+		}
+
+		trap_Cvar_Set("cg_strafeHelper", va("%i", (1 << index) ^ (cg_strafeHelper.integer & mask)));
+		trap_Cvar_Update(&cg_strafeHelper);
+
+		Com_Printf("%s %s^7\n", strafeTweaks[index].string, ((cg_strafeHelper.integer & (1 << index))
+			? "^2Enabled" : "^1Disabled"));
+	}
+}
+
 /*
 static void CG_Camera_f( void ) {
 	char name[1024];
@@ -452,7 +507,8 @@ static consoleCommand_t	commands[] = {
 	{ "invnext", CG_NextInventory_f },
 	{ "invprev", CG_PrevInventory_f },
 	{ "forcenext", CG_NextForcePower_f },
-	{ "forceprev", CG_PrevForcePower_f }
+	{ "forceprev", CG_PrevForcePower_f },
+	{ "strafeHelper", CG_StrafeHelper_f }
 };
 
 

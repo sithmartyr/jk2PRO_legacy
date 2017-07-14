@@ -9,6 +9,24 @@
 
 qboolean CG_WorldCoordToScreenCoordFloat(vec3_t worldCoord, float *x, float *y);
 qboolean CG_CalcMuzzlePoint( int entityNum, vec3_t muzzle );
+static void CG_CalculateSpeed(centity_t *cent); //jk2pro
+static void CG_RaceTimer(centity_t *cent); //jk2pro
+static void CG_Speedometer(centity_t *cent); //jk2pro
+static void CG_StrafeHelper(centity_t *cent); //jk2pro
+
+//jk2pro
+#define SHELPER_SUPEROLDSTYLE	(1<<0)
+#define SHELPER_OLDSTYLE		(1<<1)
+#define SHELPER_NEWBARS			(1<<2)
+#define SHELPER_OLDBARS			(1<<3)
+#define SHELPER_W				(1<<4)
+#define SHELPER_WA				(1<<5)
+#define SHELPER_WD				(1<<6)
+#define SHELPER_A				(1<<7)
+#define SHELPER_D				(1<<8)
+#define SHELPER_REAR			(1<<9)
+#define SHELPER_CENTER			(1<<10)
+#define SHELPER_CROSSHAIR		(1<<11)
 
 // used for scoreboard
 extern displayContextDef_t cgDC;
@@ -1052,6 +1070,7 @@ void CG_DrawForcePower(int x,int y)
 CG_DrawHUD
 ================
 */
+void Dzikie_CG_DrawLine(float x1, float y1, float x2, float y2, float size, vec4_t color, float alpha, float ycutoff);
 void CG_DrawHUD(centity_t	*cent)
 {
 	menuDef_t	*menuHUD = NULL;
@@ -1063,7 +1082,25 @@ void CG_DrawHUD(centity_t	*cent)
 		CG_CalculateSpeed(cent);
 	if (cg_speedometer.integer)
 		CG_Speedometer(cent);
+	if (cg_strafeHelper.integer)
+		CG_StrafeHelper(cent);
 
+	if (cg_strafeHelper.integer & SHELPER_CROSSHAIR) {
+		vec3_t		hcolor;
+		float		lineWidth;
+		hcolor[0] = cg_crosshairRed.value / 255.0f;
+		hcolor[1] = cg_crosshairGreen.value / 255.0f;
+		hcolor[2] = cg_crosshairBlue.value / 255.0f;
+		hcolor[3] = cg_crosshairAlpha.value / 255.0f;//alpha? pff
+
+		lineWidth = cg_strafeHelperLineWidth.value;
+		if (lineWidth < 0.25f)
+			lineWidth = 0.25f;
+		else if (lineWidth > 5)
+			lineWidth = 5;
+
+		Dzikie_CG_DrawLine(320, 235, 320, 245, lineWidth, hcolor, hcolor[3], 0); //640x480, 320x240
+	}
 	if (cg.jk2pro.detected && cg_raceTimer.integer)
 		CG_RaceTimer(cent);
 
@@ -2582,6 +2619,9 @@ static void CG_DrawCrosshair( vec3_t worldPoint, int chEntValid ) {
 	{
 		return;
 	}
+
+	if (cg_strafeHelper.integer & SHELPER_CROSSHAIR)
+		return;
 
 	if (cg.snap->ps.fallingToDeath)
 	{
@@ -4457,16 +4497,21 @@ void CG_DrawActive( stereoFrame_t stereoView ) {
  	CG_Draw2D();
 }
 
-double floorf(double x) {
-	return (int)x;
-}
-
 static void CG_CalculateSpeed(centity_t *cent) {
 	const vec_t * const velocity = (cent->currentState.clientNum == cg.clientNum ? cg.predictedPlayerState.velocity : cent->currentState.pos.trDelta);
 	//cg.jk2pro.currentSpeed = sqrtf(velocity[0] * velocity[0] + velocity[1] * velocity[1]); // is this right?
 	cg.jk2pro.currentSpeed = sqrt(velocity[0] * velocity[0] + velocity[1] * velocity[1]); // is this right?
 }
 
+float floorf(float x) {
+	/*if (x < 0.0)
+	{
+		x -= 1;
+		return (int)x;
+	}
+	return (int)x;*/
+	return floor(x);
+}
 
 #define STAT_RACEMODE 11
 static void CG_RaceTimer(centity_t *cent)
@@ -4586,5 +4631,253 @@ static void CG_Speedometer(centity_t *cent)
 		Com_sprintf(speedStr3, sizeof(speedStr3), "   %.1f", currentSpeed * 0.03106855);
 		CG_Text_Paint(cg_speedometerX.integer, cg_speedometerY.integer, cg_speedometerSize.value, colorWhite, accelStr3, 0.0f, 0, ITEM_ALIGN_RIGHT | ITEM_TEXTSTYLE_OUTLINED, FONT_NONE);
 		CG_Text_Paint(cg_speedometerX.integer, cg_speedometerY.integer, cg_speedometerSize.value, colorSpeed, speedStr3, 0.0f, 0, ITEM_ALIGN_RIGHT | ITEM_TEXTSTYLE_OUTLINED, FONT_NONE);
+	}
+}
+
+/*int PM_GetMovePhysics(void)
+{
+#if _GAME
+	return 1;
+#else
+	if (!cg.jk2pro.detected)
+		return 1;
+	if (pm && pm->ps)
+		return pm->ps->stats[13];
+	else if (cg.snap)
+		return cg.snap->ps.stats[13];
+	else
+		return 1;
+#endif
+}*/
+
+void Dzikie_CG_DrawLine(float x1, float y1, float x2, float y2, float size, vec4_t color, float alpha, float ycutoff)
+{
+	float stepx, stepy, length = sqrt((x2 - x1)*(x2 - x1) + (y2 - y1)*(y2 - y1));
+	int i;
+
+	if (length < 1)
+		length = 1;
+	else if (length > 2000)
+		length = 2000;
+	if (!ycutoff)
+		ycutoff = 480;
+
+	stepx = (x2 - x1) / (length / size);
+	stepy = (y2 - y1) / (length / size);
+
+	trap_R_SetColor(color);
+
+	for (i = 0; i <= (length / size); i++) {
+		if (x1 < 640 && y1 < 480 && y1 < ycutoff)
+			CG_DrawPic(x1, y1, size, size, cgs.media.whiteShader);
+		x1 += stepx;
+		y1 += stepy;
+	}
+}
+
+static void DrawStrafeLine(vec3_t velocity, float diff, qboolean active, int moveDir) { //moveDir is 1-7 for wasd combinations, and 8 for the centerline in cpm style, 9 and 10 for backwards a/d lines
+	vec3_t start, angs, forward, delta, line;
+	float x, y, startx, starty, lineWidth;
+	int sensitivity = cg_strafeHelperPrecision.integer;
+	static const int LINE_HEIGHT = 230; //240 is midpoint, so it should be a little higher so crosshair is always on it.
+	static const vec4_t activeColor = { 0, 1, 0, 0.75 }, normalColor = { 1, 1, 1, 0.75 }, invertColor = { 0.5f, 1, 1, 0.75 }, wColor = { 1, 0.5, 0.5, 0.75 }, rearColor = { 0.5, 1, 1, 0.75 }, centerColor = { 0.5, 1, 1, 0.75 };
+	vec4_t color = { 1, 1, 1, 0.75 };
+
+	//how the fuck do these colors work, 0111 is cyan?
+
+	if (cg_strafeHelperPrecision.integer < 100)
+		sensitivity = 100;
+	else if (cg_strafeHelperPrecision.integer > 10000)
+		sensitivity = 10000;
+
+	lineWidth = cg_strafeHelperLineWidth.value;
+	if (lineWidth < 0.25f)
+		lineWidth = 0.25f;
+	else if (lineWidth > 5)
+		lineWidth = 5;
+
+	if (active) {
+		color[0] = cg.jk2pro.strafeHelperActiveColor[0];
+		color[1] = cg.jk2pro.strafeHelperActiveColor[1];
+		color[2] = cg.jk2pro.strafeHelperActiveColor[2];
+		color[3] = cg.jk2pro.strafeHelperActiveColor[3];
+		//memcpy(color, activeColor, sizeof(vec4_t));
+	}
+	else {
+		if (moveDir == 1 || moveDir == 7)
+			memcpy(color, normalColor, sizeof(vec4_t));
+		else if (moveDir == 2 || moveDir == 6)
+			memcpy(color, invertColor, sizeof(vec4_t));
+		else if (moveDir == 0)
+			memcpy(color, wColor, sizeof(vec4_t));
+		else if (moveDir == 8)
+			memcpy(color, centerColor, sizeof(vec4_t));
+		else if (moveDir == 9 || moveDir == 10)
+			memcpy(color, rearColor, sizeof(vec4_t));
+
+		color[3] = cg_strafeHelperInactiveAlpha.value / 255.0f;
+	}
+
+	VectorCopy(cg.predictedPlayerState.origin, start);
+
+	VectorCopy(velocity, angs);
+	angs[YAW] += diff;
+	AngleVectors(angs, forward, NULL, NULL);
+	VectorScale(forward, sensitivity, delta); // line length
+
+	line[0] = delta[0] + start[0];
+	line[1] = delta[1] + start[1];
+	line[2] = start[2];
+
+	if (!CG_WorldCoordToScreenCoordFloat(line, &x, &y))
+		return;
+
+	if (cg_strafeHelper.integer & SHELPER_NEWBARS) {
+		Dzikie_CG_DrawLine(x, 260, x, 220, lineWidth, color, 0.75f, 0);
+		//CG_DottedLine( x, 260, x, 220, 1, 100, color, 0.75f ); //240 is center, so 220 - 260 is symetrical on crosshair.'
+	}
+	if (cg_strafeHelper.integer & SHELPER_OLDBARS && active && moveDir != 0) { //Not sure how to deal with multiple lines for W only so just fuck it for now..
+																			   //Proper way is to tell which line we are closest to aiming at and display the shit for that...
+		CG_FillRect(320, 240, (-4.444 * AngleSubtract(cg.predictedPlayerState.viewangles[YAW], angs[YAW])), 12, colorTable[CT_RED]);
+	}
+	if (cg_strafeHelper.integer & SHELPER_OLDSTYLE) {
+		int cutoff = 480 - cg_strafeHelperCutoff.integer; //Should be between 480 and LINE_HEIGHT
+														  //distance = sqrt( ((320-x)*(320-x)) + ((480-LINE_HEIGHT)*(480-LINE_HEIGHT)) ); 
+
+		if (cutoff > 480)
+			cutoff = 480;
+		if (cutoff < LINE_HEIGHT + 20)
+			cutoff = LINE_HEIGHT + 20;
+
+		//Com_Printf("Numdots %i\n", distance);
+		//if (distance < 0)
+		//distance = 100;
+		//else if (distance > 1000)
+		//distance = 1000;
+
+		Dzikie_CG_DrawLine(320, 480, x, LINE_HEIGHT, lineWidth, color, color[3], cutoff);
+		//CG_DottedLineSegment( 320, 480, x, LINE_HEIGHT, 1, distance, color, color[3], cutoff ); //240 is center, so 220 - 260 is symetrical on crosshair.
+	}
+	if (cg_strafeHelper.integer & SHELPER_SUPEROLDSTYLE) {
+		int cutoff = 480 - cg_strafeHelperCutoff.integer; //Should be between 480 and LINE_HEIGHT
+														  //distance = sqrt( ((320-x)*(320-x)) + ((480-LINE_HEIGHT)*(480-LINE_HEIGHT)) ); 
+
+		if (cutoff > 480)
+			cutoff = 480;
+		if (cutoff < LINE_HEIGHT + 20)
+			cutoff = LINE_HEIGHT + 20;
+
+		if (CG_WorldCoordToScreenCoordFloat(start, &startx, &starty))
+			Dzikie_CG_DrawLine(startx, starty, x, y, lineWidth, color, color[3], cutoff);
+		//CG_DottedLineSegment( startx, starty, x, y, 1, distance, color, color[3], cutoff ); //240 is center, so 220 - 260 is symetrical on crosshair.
+	}
+}
+
+int PM_GetMovePhysics();
+static void CG_StrafeHelper(centity_t *cent)
+{
+	vec_t * velocity = (cent->currentState.clientNum == cg.clientNum ? cg.predictedPlayerState.velocity : cent->currentState.pos.trDelta);
+	static vec3_t velocityAngle;
+	const float currentSpeed = cg.jk2pro.currentSpeed;
+	float pmAccel = 10.0f, pmFriction = 6.0f, frametime, optimalDeltaAngle, baseSpeed = cg.predictedPlayerState.speed;
+	const int moveStyle = PM_GetMovePhysics();
+	int offset = 75;
+	int invertedOffset = 75;
+	int moveDir;
+	qboolean onGround;
+	usercmd_t cmd = { 0 };
+
+
+	if (moveStyle == 0)
+		return;
+	if (currentSpeed < (baseSpeed - 1))
+		return;
+
+	if (moveStyle == 6) {
+		pmAccel = 12.0f;
+		pmFriction = 8.0f;
+	}
+	else if (moveStyle == 3 || moveStyle == 8) {
+		pmAccel = 15.0f;
+		pmFriction = 8.0f;
+	}
+
+	if (cg.clientNum == cg.predictedPlayerState.clientNum && !cg.demoPlayback) {
+		trap_GetUserCmd(trap_GetCurrentCmdNumber(), &cmd);
+	}
+	else if (cg.snap) {
+		moveDir = cg.snap->ps.movementDir;
+		switch (moveDir) {
+		case 0: // W
+			cmd.forwardmove = 1; break;
+		case 1: // WA
+			cmd.forwardmove = 1; cmd.rightmove = -1; break;
+		case 2: // A
+			cmd.rightmove = -1;	break;
+		case 3: // AS
+			cmd.rightmove = -1;	cmd.forwardmove = -1; break;
+		case 4: // S
+			cmd.forwardmove = -1; break;
+		case 5: // SD
+			cmd.forwardmove = -1; cmd.rightmove = 1; break;
+		case 6: // D
+			cmd.rightmove = 1; break;
+		case 7: // DW
+			cmd.rightmove = 1; cmd.forwardmove = 1;	break;
+		default:
+			break;
+		}
+	}
+	else {
+		return; //No cg.snap causes this to return.
+	}
+
+	onGround = (qboolean)(cg.snap->ps.groundEntityNum == ENTITYNUM_WORLD); //sadly predictedPlayerState makes it jerky so need to use cg.snap groundentityNum, and check for cg.snap earlier
+
+
+	frametime = 0.008f; //just assume 125fps physics i guess since know way of knowing, and dont feel like making cvar.
+
+	if (onGround)//On ground
+		optimalDeltaAngle = acos((double)((baseSpeed - pmAccel*baseSpeed*frametime) / (currentSpeed*(1 - pmFriction*(frametime))))) * (180.0f / M_PI) - 45.0f;
+	else
+		optimalDeltaAngle = acos((double)((baseSpeed - (baseSpeed * frametime)) / currentSpeed)) * (180.0f / M_PI) - 45.0f;
+
+	if (optimalDeltaAngle < 0 || optimalDeltaAngle > 360)
+		optimalDeltaAngle = 0;
+
+	//Com_Printf("Optimal Angle is %.3f\n", optimalDeltaAngle);
+
+	velocity[2] = 0;
+	vectoangles(velocity, velocityAngle); //We have the offset from our Velocity angle that we should be aiming at, so now we need to get our velocity angle.
+
+	if (moveStyle == 2 || moveStyle == 3 || moveStyle == 5 || moveStyle == 6 || moveStyle == 8) {//QW, CPM, PJK, WSW, RJCPM have center line
+		if (cg_strafeHelper.integer & SHELPER_CENTER) {
+			DrawStrafeLine(velocityAngle, 0, (qboolean)(cmd.forwardmove == 0 && cmd.rightmove != 0), 8); //Center
+		}
+	}
+	if (moveStyle != 2) { //Every style but QW has WA/WD lines
+		if (cg_strafeHelper.integer & SHELPER_WA)
+			DrawStrafeLine(velocityAngle, (optimalDeltaAngle + (offset * 0.01f)), (qboolean)(cmd.forwardmove > 0 && cmd.rightmove < 0), 1); //WA
+		if (cg_strafeHelper.integer & SHELPER_WD)
+			DrawStrafeLine(velocityAngle, (-optimalDeltaAngle - (offset * 0.01f)), (qboolean)(cmd.forwardmove > 0 && cmd.rightmove > 0), 7); //WD
+	}
+	if (moveStyle == 1 || moveStyle == 4 || moveStyle == 7) { //JKA, Q3, RJQ3, Jetpack? have A/D
+		if (cg_strafeHelper.integer & SHELPER_A)
+			DrawStrafeLine(velocityAngle, -(45.0f - (optimalDeltaAngle + (invertedOffset * 0.01f))), (qboolean)(cmd.forwardmove == 0 && cmd.rightmove < 0), 2); //A
+		if (cg_strafeHelper.integer & SHELPER_D)
+			DrawStrafeLine(velocityAngle, (45.0f - (optimalDeltaAngle + (invertedOffset * 0.01f))), (qboolean)(cmd.forwardmove == 0 && cmd.rightmove > 0), 6); //D
+
+																																							   //A/D backwards strafe?
+		if (cg_strafeHelper.integer & SHELPER_REAR) {
+			DrawStrafeLine(velocityAngle, (225.0f - (optimalDeltaAngle + (invertedOffset * 0.01f))), (qboolean)(cmd.forwardmove == 0 && cmd.rightmove < 0), 9); //A
+			DrawStrafeLine(velocityAngle, (135.0f + (optimalDeltaAngle + (invertedOffset * 0.01f))), (qboolean)(cmd.forwardmove == 0 && cmd.rightmove > 0), 10); //D
+		}
+	}
+	if (moveStyle == 1 || moveStyle == 4 || moveStyle == 7) {
+		//W only
+		if (cg_strafeHelper.integer & SHELPER_W) {
+			DrawStrafeLine(velocityAngle, (45.0f + (optimalDeltaAngle + (offset * 0.01f))), (qboolean)(cmd.forwardmove > 0 && cmd.rightmove == 0), 0); //W
+			DrawStrafeLine(velocityAngle, (-45.0f - (optimalDeltaAngle + (offset * 0.01f))), (qboolean)(cmd.forwardmove > 0 && cmd.rightmove == 0), 0); //W
+		}
 	}
 }

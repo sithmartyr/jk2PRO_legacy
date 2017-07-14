@@ -101,6 +101,7 @@ vmCvar_t	g_timeouttospec;
 vmCvar_t	g_antiFakePlayer;
 vmCvar_t	g_maxConnPerIP;
 vmCvar_t	g_playerLog;
+vmCvar_t	g_fixHighFPSAbuse;
 
 //jk2PRO MOVEMENT
 vmCvar_t	g_movementStyle;
@@ -263,6 +264,7 @@ static cvarTable_t		gameCvarTable[] = {
 	{ &g_antiFakePlayer, "g_antiFakePlayer", "1", CVAR_ARCHIVE, qfalse },
 	{ &g_maxConnPerIP, "g_maxConnPerIP", "3", CVAR_ARCHIVE, qfalse },
 	{ &g_playerLog, "g_playerLog", "1", CVAR_ARCHIVE, qfalse },
+	{ &g_fixHighFPSAbuse, "g_fixHighFPSAbuse", "0", CVAR_ARCHIVE, qfalse },
 
 	//jk2PRO MOVEMENT
 	{ &g_movementStyle, "g_movementStyle", "1", CVAR_ARCHIVE, 0, qtrue },

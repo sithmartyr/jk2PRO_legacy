@@ -125,6 +125,7 @@ char *HolocronIcons[] = {
 };
 
 int forceModelModificationCount = -1;
+int strafeHelperActiveColorModificationCount = -1;
 
 void CG_Init( int serverMessageNum, int serverCommandSequence, int clientNum );
 void CG_Shutdown( void );
@@ -430,6 +431,16 @@ vmCvar_t	cg_speedometer;
 vmCvar_t	cg_speedometerX;
 vmCvar_t	cg_speedometerY;
 vmCvar_t	cg_speedometerSize;
+vmCvar_t	cg_strafeHelperCutoff;
+vmCvar_t	cg_strafeHelper;
+vmCvar_t	cg_strafeHelperPrecision;
+vmCvar_t	cg_strafeHelperLineWidth;
+vmCvar_t	cg_strafeHelperActiveColor;
+vmCvar_t	cg_strafeHelperInactiveAlpha;
+vmCvar_t	cg_crosshairRed;
+vmCvar_t	cg_crosshairGreen;
+vmCvar_t	cg_crosshairBlue;
+vmCvar_t	cg_crosshairAlpha;
 
 vmCvar_t	cg_thirdPerson;
 vmCvar_t	cg_thirdPersonRange;
@@ -582,6 +593,16 @@ static cvarTable_t cvarTable[] = { // bk001129
 	{ &cg_speedometerX, "cg_speedometerX", "132", 0 },
 	{ &cg_speedometerY, "cg_speedometerY", "459", 0 },
 	{ &cg_speedometerSize, "cg_speedometerSize", "0.75", 0 },
+	{ &cg_strafeHelperCutoff, "cg_strafeHelperCutoff", "0", 0 },
+	{ &cg_strafeHelper, "cg_strafeHelper", "0", 0 },
+	{ &cg_strafeHelperPrecision, "cg_strafeHelperPrecision", "256", 0 },
+	{ &cg_strafeHelperLineWidth, "cg_strafeHelperLineWidth", "1", 0 },
+	{ &cg_strafeHelperActiveColor, "cg_strafeHelperActiveColor", "0 255 0 200", 0 },
+	{ &cg_strafeHelperInactiveAlpha, "cg_strafeHelperInactiveAlpha", "200", 0 },
+	{ &cg_crosshairRed, "cg_crosshairRed", "0", 0 },
+	{ &cg_crosshairGreen, "cg_crosshairGreen", "0", 0 },
+	{ &cg_crosshairBlue, "cg_crosshairBlue", "0", 0 },
+	{ &cg_crosshairAlpha, "cg_crosshairAlpha", "255", 0 },
 
 	{ &cg_thirdPerson, "cg_thirdPerson", "0", 0 },
 	{ &cg_thirdPersonRange, "cg_thirdPersonRange", "100", },
@@ -654,6 +675,41 @@ Ghoul2 Insert End
 */
 };
 
+//Strafehelper colors
+static void CG_StrafeHelperActiveColorChange(void) {
+	if (sscanf(cg_strafeHelperActiveColor.string, "%f %f %f %f", &cg.jk2pro.strafeHelperActiveColor[0], &cg.jk2pro.strafeHelperActiveColor[1], &cg.jk2pro.strafeHelperActiveColor[2], &cg.jk2pro.strafeHelperActiveColor[3]) != 4) {
+		cg.jk2pro.strafeHelperActiveColor[0] = 0;
+		cg.jk2pro.strafeHelperActiveColor[1] = 255;
+		cg.jk2pro.strafeHelperActiveColor[2] = 0;
+		cg.jk2pro.strafeHelperActiveColor[3] = 200;
+	}
+
+	if (cg.jk2pro.strafeHelperActiveColor[0] < 0)
+		cg.jk2pro.strafeHelperActiveColor[0] = 0;
+	else if (cg.jk2pro.strafeHelperActiveColor[0] > 255)
+		cg.jk2pro.strafeHelperActiveColor[0] = 255;
+
+	if (cg.jk2pro.strafeHelperActiveColor[1] < 0)
+		cg.jk2pro.strafeHelperActiveColor[1] = 0;
+	else if (cg.jk2pro.strafeHelperActiveColor[1] > 255)
+		cg.jk2pro.strafeHelperActiveColor[1] = 255;
+
+	if (cg.jk2pro.strafeHelperActiveColor[2] < 0)
+		cg.jk2pro.strafeHelperActiveColor[2] = 0;
+	else if (cg.jk2pro.strafeHelperActiveColor[2] > 255)
+		cg.jk2pro.strafeHelperActiveColor[2] = 255;
+
+	if (cg.jk2pro.strafeHelperActiveColor[3] < 25)
+		cg.jk2pro.strafeHelperActiveColor[3] = 25;
+	else if (cg.jk2pro.strafeHelperActiveColor[3] > 255)
+		cg.jk2pro.strafeHelperActiveColor[3] = 255;
+
+	cg.jk2pro.strafeHelperActiveColor[0] /= 255.0f;
+	cg.jk2pro.strafeHelperActiveColor[1] /= 255.0f;
+	cg.jk2pro.strafeHelperActiveColor[2] /= 255.0f;
+	cg.jk2pro.strafeHelperActiveColor[3] /= 255.0f;
+}
+
 static int  cvarTableSize = sizeof( cvarTable ) / sizeof( cvarTable[0] );
 
 /*
@@ -676,6 +732,7 @@ void CG_RegisterCvars( void ) {
 	cgs.localServer = atoi( var );
 
 	forceModelModificationCount = cg_forceModel.modificationCount;
+	strafeHelperActiveColorModificationCount = cg_strafeHelperActiveColor.modificationCount;
 
 	trap_Cvar_Register(NULL, "model", DEFAULT_MODEL, CVAR_USERINFO | CVAR_ARCHIVE );
 	//trap_Cvar_Register(NULL, "headmodel", DEFAULT_MODEL, CVAR_USERINFO | CVAR_ARCHIVE );
@@ -752,6 +809,11 @@ void CG_UpdateCvars( void ) {
 	if ( forceModelModificationCount != cg_forceModel.modificationCount ) {
 		forceModelModificationCount = cg_forceModel.modificationCount;
 		CG_ForceModelChange();
+	}
+
+	if (strafeHelperActiveColorModificationCount != cg_strafeHelperActiveColor.modificationCount) {
+		strafeHelperActiveColorModificationCount = cg_strafeHelperActiveColor.modificationCount;
+		CG_StrafeHelperActiveColorChange();
 	}
 }
 
