@@ -50,6 +50,7 @@ int _atoi( const char **stringPtr );
 
 int vsprintf( char *buffer, const char *fmt, va_list argptr );
 int sscanf( const char *buffer, const char *fmt, ... );
+char* strtok(char* str, const char* delimiters);
 
 // Memory functions
 void *memmove( void *dest, const void *src, size_t count );

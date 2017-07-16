@@ -141,6 +141,15 @@ void CG_ParseServerinfo( void ) {
 	cgs.capturelimit = atoi( Info_ValueForKey( info, "capturelimit" ) );
 	cgs.timelimit = atoi( Info_ValueForKey( info, "timelimit" ) );
 	cgs.maxclients = atoi( Info_ValueForKey( info, "sv_maxclients" ) );
+
+	cgs.isJK2Pro = qfalse;
+	cgs.jcinfo = 0;
+
+	if (!Q_stricmpn(Info_ValueForKey(info, "gamename"), "jk2pro", 5)) {
+		cgs.isJK2Pro = qtrue;
+		cgs.jcinfo = atoi(Info_ValueForKey(info, "jcinfo"));//[JAPRO - Clientside - All - Add gamename variable to get jcinfo from japro servers]
+	}
+
 	mapname = Info_ValueForKey( info, "mapname" );
 
 	gamename = Info_ValueForKey(info, "gamename");

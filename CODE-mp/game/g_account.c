@@ -54,41 +54,6 @@ unsigned int ip_to_int(const char * ip) {
 	return v;
 }
 
-char* strtok(char* str, const char* delimiters) {
-	static int pos;
-	static char *s;
-	int i = 0, start = pos, j = 0;
-
-	if (str != NULL)
-		s = str;
-	
-
-
-	while (s[pos] != '\0') {
-		j = 0;
-		while (delimiters[j] != '\0') {
-			if (s[pos] == delimiters[j]) {
-				s[pos] = '\0';
-				pos = pos + 1;
-				if (s[start] != '\0')
-					return (&s[start]);
-				else {
-					start = pos;
-					pos--;
-					break;
-				}
-			}
-			j++;
-		}
-		pos++;
-	}
-	s[pos] = '\0';
-	if (s[start] == '\0')
-		return NULL;
-	else
-		return &s[start];
-}
-
 void G_AddPlayerLog(char *name, char *strIP) {
 	fileHandle_t f;
 	char string[128], string2[128], buf[31 * 1024], cleanName[MAX_NETNAME];

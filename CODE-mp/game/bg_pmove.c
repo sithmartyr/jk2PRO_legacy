@@ -160,13 +160,9 @@ float forceJumpStrength[NUM_FORCE_POWER_LEVELS] =
 
 int PM_GetMovePhysics(void)
 {
-	if (!pm || !pm->ps)
-	return 1;
 #ifndef CGAME
 	if (pm->ps->stats[STAT_RACEMODE])
-	{
 		return (pm->ps->stats[STAT_MOVEMENTSTYLE]);
-	}
 	else if (g_movementStyle.integer >= 0 && g_movementStyle.integer <= 6)
 		return (g_movementStyle.integer);
 	else if (g_movementStyle.integer < 0)
@@ -174,6 +170,8 @@ int PM_GetMovePhysics(void)
 	else if (g_movementStyle.integer > 8)
 		return 8;
 #else
+	if (!cgs.isJK2Pro)
+		return 1;
 	return pm->ps->stats[STAT_MOVEMENTSTYLE];
 #endif
 }
@@ -1867,15 +1865,15 @@ static void PM_WalkMove( void ) {
 
 	// clamp the speed lower if ducking
 	if ( pm->ps->pm_flags & PMF_DUCKED ) {
-		if ( wishspeed > pm->ps->speed * pm_duckScale ) {
-			wishspeed = pm->ps->speed * pm_duckScale;
+		if ( wishspeed > pm->ps->speed * realduckscale ) {
+			wishspeed = pm->ps->speed * realduckscale;
 		}
 	}
 	else if ( (pm->ps->pm_flags & PMF_ROLLING) && !BG_InRoll(pm->ps, pm->ps->legsAnim) &&
 		!PM_InRollComplete(pm->ps, pm->ps->legsAnim))
 	{
-		if ( wishspeed > pm->ps->speed * pm_duckScale ) {
-			wishspeed = pm->ps->speed * pm_duckScale;
+		if ( wishspeed > pm->ps->speed * realduckscale ) {
+			wishspeed = pm->ps->speed * realduckscale;
 		}
 	}
 

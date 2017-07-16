@@ -125,7 +125,6 @@ char *HolocronIcons[] = {
 };
 
 int forceModelModificationCount = -1;
-int strafeHelperActiveColorModificationCount = -1;
 
 void CG_Init( int serverMessageNum, int serverCommandSequence, int clientNum );
 void CG_Shutdown( void );
@@ -677,12 +676,28 @@ Ghoul2 Insert End
 
 //Strafehelper colors
 static void CG_StrafeHelperActiveColorChange(void) {
-	if (sscanf(cg_strafeHelperActiveColor.string, "%f %f %f %f", &cg.jk2pro.strafeHelperActiveColor[0], &cg.jk2pro.strafeHelperActiveColor[1], &cg.jk2pro.strafeHelperActiveColor[2], &cg.jk2pro.strafeHelperActiveColor[3]) != 4) {
+
+	char *str = cg_strafeHelperActiveColor.string;
+	char *pch = NULL;
+	int incr = 0;
+
+	pch = strtok(str, " ,-");
+	while (pch != NULL)
+	{
+		incr += 1;
+		pch = strtok(NULL, " ,-");
+	}
+
+	//This way sucked
+	//if (sscanf(cg_strafeHelperActiveColor.string, "%f %f %f %f", &cg.jk2pro.strafeHelperActiveColor[0], &cg.jk2pro.strafeHelperActiveColor[1], &cg.jk2pro.strafeHelperActiveColor[2], &cg.jk2pro.strafeHelperActiveColor[3]) != 4) {
+	if(incr != 4) {
 		cg.jk2pro.strafeHelperActiveColor[0] = 0;
 		cg.jk2pro.strafeHelperActiveColor[1] = 255;
 		cg.jk2pro.strafeHelperActiveColor[2] = 0;
 		cg.jk2pro.strafeHelperActiveColor[3] = 200;
 	}
+	else
+		sscanf(cg_strafeHelperActiveColor.string, "%f %f %f %f", &cg.jk2pro.strafeHelperActiveColor[0], &cg.jk2pro.strafeHelperActiveColor[1], &cg.jk2pro.strafeHelperActiveColor[2], &cg.jk2pro.strafeHelperActiveColor[3]);
 
 	if (cg.jk2pro.strafeHelperActiveColor[0] < 0)
 		cg.jk2pro.strafeHelperActiveColor[0] = 0;
@@ -732,7 +747,6 @@ void CG_RegisterCvars( void ) {
 	cgs.localServer = atoi( var );
 
 	forceModelModificationCount = cg_forceModel.modificationCount;
-	strafeHelperActiveColorModificationCount = cg_strafeHelperActiveColor.modificationCount;
 
 	trap_Cvar_Register(NULL, "model", DEFAULT_MODEL, CVAR_USERINFO | CVAR_ARCHIVE );
 	//trap_Cvar_Register(NULL, "headmodel", DEFAULT_MODEL, CVAR_USERINFO | CVAR_ARCHIVE );

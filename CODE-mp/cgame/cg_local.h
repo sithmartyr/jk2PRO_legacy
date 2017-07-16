@@ -1369,6 +1369,7 @@ typedef struct {
 	int				flagStatus;
 
 	int				jcinfo;
+	qboolean		isJK2Pro;
 
 	qboolean  newHud;
 
@@ -1681,6 +1682,7 @@ void CG_DrawTopBottom(float x, float y, float w, float h, float size);
 extern	int sortedTeamPlayers[TEAM_MAXOVERLAY];
 extern	int	numSortedTeamPlayers;
 extern	int drawTeamOverlayModificationCount;
+extern	int	strafeHelperActiveColorModificationCount;
 extern  char systemChat[256];
 extern  char teamChat1[256];
 extern  char teamChat2[256];
