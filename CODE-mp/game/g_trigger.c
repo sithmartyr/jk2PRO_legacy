@@ -438,8 +438,6 @@ void TimerStart(gentity_t *trigger, gentity_t *player, trace_t *trace) {//JK2PRO
 	player->client->pers.keepDemo = qfalse;*/
 	//jk2pro - addlater - END auto demo record stuff
 
-	//multi_trigger(trigger, player); //Let it have a target, so it can point to restricts.  Move this up here, so swoops can activate it for proper swoop teleporting?
-
 	if (trigger->noise_index)
 		G_Sound(player, CHAN_AUTO, trigger->noise_index);//could just use player instead of trigger->activator ?   How do we make this so only the activator hears it?
 
@@ -508,8 +506,7 @@ void TimerStop(gentity_t *trigger, gentity_t *player, trace_t *trace) {//JK2PRO 
 			time = 0.001f;
 		//average = floorf(player->client->pers.stats.displacement / ((level.time - player->client->pers.stats.startLevelTime) * 0.001f)) + 0.5f;//Should use level time for this 
 		if (player->client->pers.stats.displacementSamples)
-			//I'm making this 20 for the sake of testing.  I will fix this later when I ask loda wtf to do bout this.
-			average = floorf(((player->client->pers.stats.displacement * sv_fps.value) / player->client->pers.stats.displacementSamples) + 0.5f);
+			average = /*floorf(*/((player->client->pers.stats.displacement * sv_fps.value) / player->client->pers.stats.displacementSamples);// + 0.5f);
 		else
 			average = player->client->pers.stats.topSpeed;
 
@@ -593,12 +590,12 @@ void TimerStop(gentity_t *trigger, gentity_t *player, trace_t *trace) {//JK2PRO 
 
 		if (trigger->message) {
 			trap_SendServerCommand(-1, va("print \"^3%-16s%s completed in ^3%-12s%s max:^3%-10i%s average:^3%-10i%s style:^3%-10s%s by ^%i%s\n\"",
-				trigger->message, c, timeStr, c, (int)floorf(player->client->pers.stats.topSpeed + 0.5f), c, average, c, style, c, nameColor, playerName));
+				trigger->message, c, timeStr, c, (int)(player->client->pers.stats.topSpeed), c, average, c, style, c, nameColor, playerName));
 		}
 		else {
 			//Q_strcat(courseName, sizeof(courseName), " ()");
 			trap_SendServerCommand(-1, va("print \"%sCompleted in ^3%-12s%s max:^3%-10i%s average:^3%-10i%s style:^3%-10s%s by ^%i%s\n\"",
-				c, timeStr, c, (int)floorf(player->client->pers.stats.topSpeed + 0.5f), c, average, c, style, c, nameColor, playerName));
+				c, timeStr, c, (int)(player->client->pers.stats.topSpeed), c, average, c, style, c, nameColor, playerName));
 		}
 		if (valid) {
 			char strIP[NET_ADDRSTRMAXLEN] = { 0 };
@@ -647,7 +644,6 @@ void TimerCheckpoint(gentity_t *trigger, gentity_t *player, trace_t *trace) {//J
 		int average;
 		//const int average = floorf(player->client->pers.stats.displacement / ((level.time - player->client->pers.stats.startLevelTime) * 0.001f)) + 0.5f; //Could this be more accurate?
 		if (player->client->pers.stats.displacementSamples)
-			//I'm changing this to 20 just for testing sakes.  I will change it back later when I ask loda wtf to do bout this.
 			average = floorf(((player->client->pers.stats.displacement * sv_fps.value) / player->client->pers.stats.displacementSamples) + 0.5f);
 		else
 			average = player->client->pers.stats.topSpeed;

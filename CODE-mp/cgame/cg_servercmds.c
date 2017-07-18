@@ -155,7 +155,6 @@ void CG_ParseServerinfo( void ) {
 	gamename = Info_ValueForKey(info, "gamename");
 	if (!Q_stricmpn(gamename, "jk2pro", 6)) {
 		cg.jk2pro.detected = qtrue;
-		CG_Printf("jk2PRO demo detected\n");
 	}
 
 	//rww - You must do this one here, Info_ValueForKey always uses the same memory pointer.

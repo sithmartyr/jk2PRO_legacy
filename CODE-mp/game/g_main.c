@@ -141,7 +141,7 @@ vmCvar_t	g_rabbit;
 //[videoP - jk2PRO - Serverside - All - Ignore - End]
 
 vmCvar_t	sv_maxclients;
-extern vmCvar_t	sv_fps;
+vmCvar_t	sv_fps;
 
 int gDuelist1 = -1;
 int gDuelist2 = -1;
@@ -301,7 +301,9 @@ static cvarTable_t		gameCvarTable[] = {
 	{ &g_allowGunDuel, "g_allowGunDuel", "1", CVAR_ARCHIVE, 0, qtrue },
 
 	//jk2PRO CTF
-	{ &g_rabbit, "g_rabbit", "0", CVAR_ARCHIVE, 0, qtrue }
+	{ &g_rabbit, "g_rabbit", "0", CVAR_ARCHIVE, 0, qtrue },
+
+	{ &sv_fps, "sv_fps", "20", /*CVAR_SYSTEMINFO*/CVAR_SERVERINFO, 0, qfalse }
 	//[videoP - jk2PRO - Serverside - All - CVARS - End]
 };
 
@@ -2228,10 +2230,12 @@ int start, end;
 				if (ent->client->pers.stats.startTime) {
 					float xyspeed;
 
-					ent->client->pers.stats.displacement += xyspeed / sv_fps.value;
+					xyspeed = sqrt(ent->client->ps.velocity[0] * ent->client->ps.velocity[0] + ent->client->ps.velocity[1] * ent->client->ps.velocity[1]);
+					ent->client->pers.stats.displacement += xyspeed/sv_fps.value;
 					ent->client->pers.stats.displacementSamples++;
 					if (xyspeed > ent->client->pers.stats.topSpeed)
-						ent->client->pers.stats.topSpeed = xyspeed; //uhh, round?           
+						ent->client->pers.stats.topSpeed = xyspeed; //uhh, round?         
+
 				}	
 			}
 			G_RunClient( ent );

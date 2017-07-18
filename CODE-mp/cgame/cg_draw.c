@@ -4504,13 +4504,12 @@ static void CG_CalculateSpeed(centity_t *cent) {
 }
 
 float floorf(float x) {
-	/*if (x < 0.0)
+	if (x < 0)
 	{
 		x -= 1;
 		return (int)x;
 	}
-	return (int)x;*/
-	return floor(x);
+	return (int)x;
 }
 
 #define STAT_RACEMODE 11

@@ -266,7 +266,7 @@ void PM_StepSlideMove( qboolean gravity ) {
 	}
 
 	VectorCopy(start_o, down);
-	down[2] -= STEPSIZE;
+	down[2] -= NEW_STEPSIZE;
 	pm->trace (&trace, start_o, pm->mins, pm->maxs, down, pm->ps->clientNum, pm->tracemask);
 	VectorSet(up, 0, 0, 1);
 	// never step up when you still have up velocity
@@ -283,7 +283,7 @@ void PM_StepSlideMove( qboolean gravity ) {
 	VectorCopy (pm->ps->velocity, down_v);
 
 	VectorCopy (start_o, up);
-	up[2] += STEPSIZE;
+	up[2] += NEW_STEPSIZE;
 
 	// test the player position if they were a stepheight higher
 	pm->trace (&trace, start_o, pm->mins, pm->maxs, up, pm->ps->clientNum, pm->tracemask);

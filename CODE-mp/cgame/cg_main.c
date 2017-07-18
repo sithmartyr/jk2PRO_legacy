@@ -507,6 +507,8 @@ vmCvar_t	cg_singlePlayerActive;
 vmCvar_t	cg_recordSPDemo;
 vmCvar_t	cg_recordSPDemoName;
 
+vmCvar_t	sv_fps;
+
 vmCvar_t	ui_myteam;
 
 typedef struct {
