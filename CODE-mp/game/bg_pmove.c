@@ -4851,6 +4851,12 @@ void Pmove (pmove_t *pmove) {
 
 	pmove->ps->pmove_framecount = (pmove->ps->pmove_framecount+1) & ((1<<PS_PMOVEFRAMECOUNTBITS)-1);
 
+	if (pmove->ps->stats[STAT_RACEMODE]) {//racemode only?
+		pmove->cmd.angles[ROLL] = 0;
+		pmove->ps->viewangles[ROLL] = 0;
+		pmove->ps->delta_angles[ROLL] = 0;
+	}
+
 	// chop the move up if it is too long, to prevent framerate
 	// dependent behavior
 	while ( pmove->ps->commandTime != finalTime ) {

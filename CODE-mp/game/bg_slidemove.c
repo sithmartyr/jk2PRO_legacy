@@ -223,10 +223,35 @@ void PM_StepSlideMove( qboolean gravity ) {
 	float		pre_z;
 	int			usingspeed;
 	int			i;
+	int NEW_STEPSIZE = STEPSIZE;
 
 	i = 0;
 
 	usingspeed = 0;
+
+	if (pm->ps->stats[STAT_MOVEMENTSTYLE] == 3 || pm->ps->stats[STAT_MOVEMENTSTYLE] == 4 || pm->ps->stats[STAT_MOVEMENTSTYLE] == 6 || pm->ps->stats[STAT_MOVEMENTSTYLE] == 7 || pm->ps->stats[STAT_MOVEMENTSTYLE] == 8) {
+		if (pm->ps->velocity[2] > 0 && pm->cmd.upmove > 0) {
+			int jumpHeight = pm->ps->origin[2] - pm->ps->fd.forceJumpZStart;
+
+			if (jumpHeight > 48)
+				jumpHeight = 48;
+			else if (jumpHeight < 22)
+				jumpHeight = 22;
+
+			NEW_STEPSIZE = 48 - jumpHeight + 22;
+
+			//trap->SendServerCommand(-1, va("print \"new stepsize: %i, expected max end height: %i\n\"", NEW_STEPSIZE, NEW_STEPSIZE + (int)(pm->ps->origin[2] - pm->ps->fd.forceJumpZStart)));
+
+			//This means that we can always clip things up to 48 units tall, if we are moving up when we hit it and from a bhop..
+			//It means we can sometimes clip things up to 70 units tall, if we hit it in right part of jump
+			//Should it be higher..? some of the things in q3 are 56 units tall..
+
+			//NEW_STEPSIZE = 46;
+			//Make stepsize equal to.. our current 48 - our current jumpheight ?
+		}
+		else
+			NEW_STEPSIZE = 22;
+	}
 
 	VectorCopy (pm->ps->origin, start_o);
 	VectorCopy (pm->ps->velocity, start_v);
@@ -364,8 +389,26 @@ void PM_StepSlideMove( qboolean gravity ) {
 	if ( !trace.allsolid ) {
 		VectorCopy (trace.endpos, pm->ps->origin);
 	}
-	if ( trace.fraction < 1.0 ) {
-		PM_ClipVelocity( pm->ps->velocity, trace.plane.normal, pm->ps->velocity, OVERCLIP );
+	if (trace.fraction < 1.0) {
+		if (pm->ps->stats[STAT_MOVEMENTSTYLE] == 6) {
+			vec3_t oldVel, clipped_velocity, newVel;
+			float oldSpeed, newSpeed;
+
+			VectorCopy(pm->ps->velocity, oldVel);
+			oldSpeed = oldVel[0] * oldVel[0] + oldVel[1] * oldVel[1];
+
+			PM_ClipVelocity(pm->ps->velocity, trace.plane.normal, clipped_velocity, OVERCLIP); //WSW RAMPJUMP
+
+			VectorCopy(clipped_velocity, newVel);
+			newVel[2] = 0;
+			newSpeed = newVel[0] * newVel[0] + newVel[1] * newVel[1];
+
+			if (newSpeed > oldSpeed)
+				VectorCopy(clipped_velocity, pm->ps->velocity);
+		}
+		else {
+			PM_ClipVelocity(pm->ps->velocity, trace.plane.normal, pm->ps->velocity, OVERCLIP); //WSW RAMPJUMP
+		}
 	}
 
 #if 0
