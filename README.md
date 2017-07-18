@@ -22,7 +22,7 @@ All features will be able to be configured, so that no gameplay changes will int
 Use the batch files (cgame.bat, game.bat, etc.) in each module's proper directory to compile the Quake Virtual Machines (*.qvm).
 
 ## Maintainers
-* slaytan1c (Darth Martyr)
+* sithmartyr (Darth Martyr)
 
 ### Credits
 **videoP**, the original author of jaPRO.  This mod is derived from jaPRO, and he really deserves all the credit for this mod's existence.  He has been a huge help with development, and that's an understatement. 
